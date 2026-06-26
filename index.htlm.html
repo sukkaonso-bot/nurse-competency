@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบประเมินสมรรถนะพยาบาลเวรตรวจการนอกเวลา</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --primary: #185FA5;
+  --primary-light: #E6F1FB;
+  --primary-mid: #378ADD;
+  --success: #0F6E56;
+  --success-light: #E1F5EE;
+  --warning: #BA7517;
+  --warning-light: #FAEEDA;
+  --danger: #A32D2D;
+  --danger-light: #FCEBEB;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --gray-bg: #F7F6F3;
+  --border: rgba(0,0,0,0.12);
+  --text: #1a1a1a;
+  --text-muted: #6b6b6b;
+  --white: #ffffff;
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', 'Noto Sans Thai', sans-serif; background: var(--gray-bg); color: var(--text); font-size: 15px; line-height: 1.6; }
+a { color: var(--primary); }
+h1,h2,h3,h4 { font-weight: 600; line-height: 1.3; }
+
+/* NAV */
+.nav { background: var(--white); border-bottom: 0.5px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; gap: 0; position: sticky; top: 0; z-index: 100; }
+.nav-brand { font-size: 14px; font-weight: 600; color: var(--primary); padding: 1rem 0; margin-right: 1.5rem; display: flex; align-items: center; gap: 8px; }
+.nav-brand i { font-size: 20px; }
+.nav-tabs { display: flex; height: 56px; }
+.nav-tab { padding: 0 1.1rem; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border-bottom: 2.5px solid transparent; height: 100%; display: flex; align-items: center; gap: 6px; transition: all 0.15s; white-space: nowrap; }
+.nav-tab:hover { color: var(--primary); }
+.nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+.nav-tab i { font-size: 16px; }
+
+/* PAGES */
+.page { display: none; padding: 1.5rem; max-width: 960px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* CARDS */
+.card { background: var(--white); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.card-title { font-size: 15px; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+.card-title i { color: var(--primary); font-size: 18px; }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+
+/* METRIC CARDS */
+.metric { background: var(--gray-bg); border-radius: var(--radius); padding: 1rem; text-align: center; }
+.metric-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.metric-value { font-size: 26px; font-weight: 700; }
+.metric-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.metric.blue .metric-value { color: var(--primary); }
+.metric.green .metric-value { color: var(--success); }
+.metric.amber .metric-value { color: var(--warning); }
+.metric.red .metric-value { color: var(--danger); }
+
+/* FORM */
+.form-group { margin-bottom: 1rem; }
+.form-label { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px; display: block; }
+.form-label.required::after { content: ' *'; color: var(--danger); }
+input[type=text], input[type=date], select, textarea {
+  width: 100%; padding: 8px 12px; border: 0.5px solid var(--border);
+  border-radius: var(--radius); font-size: 14px; background: var(--white);
+  color: var(--text); outline: none; transition: border 0.15s;
+  font-family: inherit;
+}
+input[type=text]:focus, input[type=date]:focus, select:focus, textarea:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 3px rgba(24,95,165,0.1);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* BUTTONS */
+.btn { padding: 9px 18px; border-radius: var(--radius); border: 0.5px solid var(--border); background: var(--white); font-size: 14px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; font-family: inherit; }
+.btn:hover { background: var(--gray-bg); }
+.btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary:hover { background: #1450a0; }
+.btn-success { background: var(--success); color: white; border-color: var(--success); }
+.btn-success:hover { background: #0a5040; }
+.btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge-blue { background: var(--primary-light); color: #0C447C; }
+.badge-green { background: var(--success-light); color: #085041; }
+.badge-amber { background: var(--warning-light); color: #633806; }
+.badge-red { background: var(--danger-light); color: #791F1F; }
+.badge-purple { background: var(--purple-light); color: #3C3489; }
+
+/* RATING SCALE */
+.rating-group { display: flex; gap: 8px; }
+.rating-btn { flex: 1; padding: 10px 6px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--white); cursor: pointer; text-align: center; font-size: 13px; font-weight: 500; transition: all 0.15s; font-family: inherit; }
+.rating-btn:hover { border-color: var(--primary-mid); background: var(--primary-light); }
+.rating-btn.selected { background: var(--primary); color: white; border-color: var(--primary); }
+.rating-btn.selected.r1 { background: #A32D2D; border-color: #A32D2D; }
+.rating-btn.selected.r2 { background: #BA7517; border-color: #BA7517; }
+.rating-btn.selected.r3 { background: #185FA5; border-color: #185FA5; }
+.rating-btn.selected.r4 { background: #0F6E56; border-color: #0F6E56; }
+.rating-btn.selected.r5 { background: #534AB7; border-color: #534AB7; }
+.rating-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* COMPETENCY TABLE */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.comp-table th { background: var(--gray-bg); padding: 10px 12px; text-align: left; font-size: 12px; font-weight: 600; color: var(--text-muted); border-bottom: 0.5px solid var(--border); white-space: nowrap; }
+.comp-table td { padding: 12px; border-bottom: 0.5px solid var(--border); vertical-align: top; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: var(--gray-bg); }
+.comp-name { font-weight: 500; font-size: 14px; }
+.comp-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+/* SECTION HEADER */
+.section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.section-title { font-size: 18px; font-weight: 700; }
+.section-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* QUIZ */
+.quiz-question { margin-bottom: 1.5rem; padding: 1.25rem; background: var(--gray-bg); border-radius: var(--radius); }
+.quiz-num { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 6px; }
+.quiz-text { font-size: 14px; font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.quiz-option { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border: 0.5px solid var(--border); border-radius: var(--radius); background: var(--white); cursor: pointer; transition: all 0.15s; font-size: 13px; }
+.quiz-option:hover { border-color: var(--primary-mid); background: var(--primary-light); }
+.quiz-option.selected { border-color: var(--primary); background: var(--primary-light); }
+.quiz-option.correct { border-color: var(--success); background: var(--success-light); }
+.quiz-option.wrong { border-color: var(--danger); background: var(--danger-light); }
+.quiz-option input[type=radio] { margin-top: 1px; accent-color: var(--primary); flex-shrink: 0; }
+
+/* CHART WRAPPER */
+.chart-wrap { position: relative; width: 100%; height: 280px; }
+
+/* PROGRESS BAR */
+.progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.3s; }
+
+/* ALERTS */
+.alert { padding: 12px 16px; border-radius: var(--radius); font-size: 13px; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 1rem; }
+.alert i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-info { background: var(--primary-light); color: #0C447C; border: 0.5px solid #B5D4F4; }
+.alert-success { background: var(--success-light); color: #085041; border: 0.5px solid #9FE1CB; }
+.alert-warning { background: var(--warning-light); color: #633806; border: 0.5px solid #FAC775; }
+.alert-danger { background: var(--danger-light); color: #791F1F; border: 0.5px solid #F7C1C1; }
+
+/* STEP */
+.steps { display: flex; gap: 0; border-bottom: 0.5px solid var(--border); margin-bottom: 1.5rem; }
+.step-item { padding: 10px 16px; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.step-item.done { color: var(--success); }
+.step-item.active { color: var(--primary); font-weight: 600; }
+.step-dot { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.step-item.done .step-dot { background: var(--success); color: white; border-color: var(--success); }
+
+/* RESULT */
+.result-card { text-align: center; padding: 2rem; }
+.result-score { font-size: 56px; font-weight: 800; margin: 0.5rem 0; }
+.result-level { font-size: 18px; font-weight: 600; margin-bottom: 0.5rem; }
+
+/* DIVIDER */
+.divider { height: 0.5px; background: var(--border); margin: 1.25rem 0; }
+
+/* TABLE responsive */
+@media(max-width:640px) {
+  .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
+  .page { padding: 1rem; }
+  .nav-brand span { display: none; }
+  .nav-tab span { display: none; }
+}
+
+/* DASHBOARD */
+.dash-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+@media(max-width:720px) { .dash-row { grid-template-columns: 1fr; } }
+
+.nurse-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+.nurse-row:last-child { border-bottom: none; }
+.nurse-name { font-size: 14px; font-weight: 500; }
+.nurse-info { font-size: 12px; color: var(--text-muted); }
+.score-bar-wrap { width: 120px; }
+
+/* SCROLLABLE */
+.scroll-x { overflow-x: auto; }
+
+/* HIDE */
+.hidden { display: none !important; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal-overlay.hidden { display: none; }
+.modal-box { background: var(--white); border-radius: var(--radius-lg); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+.modal-head { padding: 1.25rem 1.5rem; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-body { padding: 1.5rem; }
+
+/* competency weight badge */
+.weight-badge { display: inline-block; padding: 2px 8px; background: var(--primary-light); color: var(--primary); border-radius: 4px; font-size: 11px; font-weight: 600; }
+
+/* Radar chart label */
+.chart-wrap-lg { position: relative; width: 100%; height: 350px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <i class="ti ti-shield-check"></i>
+    <span>ระบบประเมินสมรรถนะเวรตรวจการพยาบาล</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')" id="tab-home">
+      <i class="ti ti-home"></i><span>หน้าหลัก</span>
+    </button>
+    <button class="nav-tab" onclick="showPage('assess')" id="tab-assess">
+      <i class="ti ti-clipboard-check"></i><span>ประเมินสมรรถนะ</span>
+    </button>
+    <button class="nav-tab" onclick="showPage('quiz')" id="tab-quiz">
+      <i class="ti ti-pencil"></i><span>ทดสอบความรู้</span>
+    </button>
+    <button class="nav-tab" onclick="showPage('dashboard')" id="tab-dashboard">
+      <i class="ti ti-chart-bar"></i><span>แดชบอร์ด</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ========== HOME PAGE ========== -->
+<div class="page active" id="page-home">
+  <div style="margin-bottom:1.5rem;">
+    <div class="section-title">ระบบประเมินสมรรถนะพยาบาลเวรตรวจการนอกเวลา</div>
+    <div class="section-sub">โรงพยาบาลกลาง · กลุ่มภารกิจด้านการพยาบาล</div>
+  </div>
+
+  <div class="alert alert-info">
+    <i class="ti ti-info-circle"></i>
+    <div>ระบบนี้ใช้สำหรับประเมินสมรรถนะ 10 ด้าน ทั้งการประเมินตนเองและผู้บังคับบัญชา/พี่เลี้ยง รวมถึงการทดสอบความรู้ Pre–Post test จำนวน 40 ข้อ และแดชบอร์ดสำหรับผู้บริหาร</div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:1rem;">
+    <div class="card" style="cursor:pointer;border-color:#B5D4F4;" onclick="showPage('assess')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-clipboard-check" style="font-size:22px;color:var(--primary);"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;">ประเมินสมรรถนะ</div>
+          <div style="font-size:12px;color:var(--text-muted);">10 ด้าน · 5 ระดับ</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);">ประเมินตนเองหรือผู้บังคับบัญชาประเมิน ครอบคลุมทั้ง 10 สมรรถนะสำคัญ พร้อมแผนพัฒนารายบุคคล</div>
+    </div>
+    <div class="card" style="cursor:pointer;border-color:#9FE1CB;" onclick="showPage('quiz')">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--success-light);display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-pencil" style="font-size:22px;color:var(--success);"></i>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:600;">ทดสอบความรู้</div>
+          <div style="font-size:12px;color:var(--text-muted);">Pre/Post test · 40 ข้อ</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);">แบบทดสอบครอบคลุม 10 หมวด แสดงผลทันทีพร้อมเฉลย วิเคราะห์คะแนนรายหมวด</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-list-check"></i>สมรรถนะ 10 ด้านที่ประเมิน</div>
+    <div class="scroll-x">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">#</th>
+          <th>สมรรถนะ</th>
+          <th style="width:80px;text-align:center;">น้ำหนัก</th>
+          <th style="width:120px;">เกณฑ์ขั้นต่ำ</th>
+        </tr>
+      </thead>
+      <tbody id="comp-overview-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-award"></i>เกณฑ์การผ่าน (5 ระดับ)</div>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-purple" style="min-width:60px;justify-content:center;">ระดับ 5</span><span>เชี่ยวชาญ — 90–100 คะแนน</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-green" style="min-width:60px;justify-content:center;">ระดับ 4</span><span>ชำนาญ — 80–89 คะแนน</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-blue" style="min-width:60px;justify-content:center;">ระดับ 3</span><span>ผ่านเกณฑ์ — 70–79 คะแนน</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-amber" style="min-width:60px;justify-content:center;">ระดับ 2</span><span>ต้องพัฒนา — 60–69 คะแนน</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span class="badge badge-red" style="min-width:60px;justify-content:center;">ระดับ 1</span><span>ไม่ผ่านเกณฑ์ — ต่ำกว่า 60 คะแนน</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clock"></i>ช่วงเวลาการประเมิน</div>
+      <div style="font-size:13px;display:flex;flex-direction:column;gap:8px;color:var(--text-muted);">
+        <div style="display:flex;gap:8px;align-items:flex-start;"><i class="ti ti-circle-dot" style="color:var(--primary);font-size:14px;margin-top:2px;"></i><span><b style="color:var(--text);">ครั้งแรก</b> — ก่อนเริ่มปฏิบัติหน้าที่</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;"><i class="ti ti-circle-dot" style="color:var(--primary);font-size:14px;margin-top:2px;"></i><span><b style="color:var(--text);">1 เดือน</b> — ติดตามผลระยะต้น</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;"><i class="ti ti-circle-dot" style="color:var(--primary);font-size:14px;margin-top:2px;"></i><span><b style="color:var(--text);">3 เดือน</b> — ระหว่างทดลองปฏิบัติหน้าที่</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;"><i class="ti ti-circle-dot" style="color:var(--primary);font-size:14px;margin-top:2px;"></i><span><b style="color:var(--text);">6 เดือน</b> — ติดตามความก้าวหน้า</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;"><i class="ti ti-circle-dot" style="color:var(--primary);font-size:14px;margin-top:2px;"></i><span><b style="color:var(--text);">ประจำปี</b> — ทบทวนสมรรถนะประจำปี</span></div>
+        <div style="display:flex;gap:8px;align-items:flex-start;"><i class="ti ti-circle-dot" style="color:var(--primary);font-size:14px;margin-top:2px;"></i><span><b style="color:var(--text);">หลังเหตุการณ์สำคัญ</b> — กรณีเกิดอุบัติการณ์</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ASSESSMENT PAGE ========== -->
+<div class="page" id="page-assess">
+  <div class="section-head">
+    <div>
+      <div class="section-title">ประเมินสมรรถนะ</div>
+      <div class="section-sub">กรอกข้อมูลและประเมิน 10 สมรรถนะ</div>
+    </div>
+  </div>
+
+  <div class="steps" id="assess-steps">
+    <div class="step-item active" id="step1-label">
+      <div class="step-dot">1</div><span>ข้อมูลบุคคล</span>
+    </div>
+    <div class="step-item" id="step2-label">
+      <div class="step-dot">2</div><span>ประเมินสมรรถนะ</span>
+    </div>
+    <div class="step-item" id="step3-label">
+      <div class="step-dot">3</div><span>ผลและแผนพัฒนา</span>
+    </div>
+  </div>
+
+  <!-- STEP 1: PROFILE -->
+  <div id="assess-step1">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-user"></i>ข้อมูลผู้รับการประเมิน</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label required">ชื่อ–สกุล</label>
+          <input type="text" id="a-name" placeholder="ชื่อ-นามสกุล">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ตำแหน่ง</label>
+          <select id="a-position">
+            <option value="">-- เลือก --</option>
+            <option>ชำนาญการ</option>
+            <option>ชำนาญการพิเศษ</option>
+            <option>อื่น ๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">หน่วยงานประจำ</label>
+          <input type="text" id="a-dept" placeholder="เช่น อายุรกรรมชาย ชั้น 5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">กลุ่มงาน/สาขา</label>
+          <select id="a-ward">
+            <option value="">-- เลือก --</option>
+            <option>อายุรกรรม</option><option>ศัลยกรรม</option><option>ICU</option>
+            <option>ER</option><option>OR</option><option>สูติกรรม</option>
+            <option>กุมารเวชกรรม</option><option>อื่น ๆ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ประเภทการปฏิบัติหน้าที่</label>
+          <select id="a-type">
+            <option value="">-- เลือก --</option>
+            <option>เวรตรวจการใหม่</option>
+            <option>พี่เลี้ยง</option>
+            <option>เวรตรวจการประจำ</option>
+            <option>เวรตรวจการสำรอง</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">อายุงานรวม</label>
+          <select id="a-exp">
+            <option value="">-- เลือก --</option>
+            <option>0–1 ปี</option><option>>1–3 ปี</option>
+            <option>>3–5 ปี</option><option>>5–10 ปี</option><option>>10 ปีขึ้นไป</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">รอบการประเมิน</label>
+          <select id="a-round">
+            <option value="">-- เลือก --</option>
+            <option>ครั้งแรก</option>
+            <option>1 เดือน</option>
+            <option>3 เดือน</option>
+            <option>6 เดือน</option>
+            <option>ประจำปี</option>
+            <option>หลังเหตุการณ์สำคัญ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">วันที่ประเมิน</label>
+          <input type="date" id="a-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ผู้ประเมิน</label>
+          <select id="a-evaluator-type">
+            <option value="self">ประเมินตนเอง</option>
+            <option value="mentor">พี่เลี้ยง / ผู้บังคับบัญชา</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ชื่อพี่เลี้ยง/ผู้ประเมิน</label>
+          <input type="text" id="a-mentor" placeholder="ชื่อ-นามสกุลผู้ประเมิน">
+        </div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="goAssessStep2()"><i class="ti ti-arrow-right"></i>ถัดไป: ประเมินสมรรถนะ</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: COMPETENCY RATING -->
+  <div id="assess-step2" class="hidden">
+    <div class="alert alert-info">
+      <i class="ti ti-info-circle"></i>
+      <div>ประเมินแต่ละสมรรถนะ 5 ระดับ: <b>1=ไม่ผ่าน</b> · <b>2=ต้องพัฒนา</b> · <b>3=ผ่านเกณฑ์</b> · <b>4=ชำนาญ</b> · <b>5=เชี่ยวชาญ</b></div>
+    </div>
+    <div id="comp-forms"></div>
+    <div class="btn-group">
+      <button class="btn" onclick="goStep(1)"><i class="ti ti-arrow-left"></i>ย้อนกลับ</button>
+      <button class="btn btn-primary" onclick="goAssessStep3()"><i class="ti ti-chart-bar"></i>ดูผลการประเมิน</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: RESULTS -->
+  <div id="assess-step3" class="hidden">
+    <div class="card">
+      <div class="result-card">
+        <div style="font-size:13px;color:var(--text-muted);">คะแนนรวมถ่วงน้ำหนัก</div>
+        <div class="result-score" id="res-score">0</div>
+        <div class="result-level" id="res-level">-</div>
+        <div id="res-badge" style="margin:8px 0;"></div>
+        <div style="font-size:13px;color:var(--text-muted);" id="res-action">-</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-radar"></i>ภาพรวมสมรรถนะ (Radar)</div>
+        <div class="chart-wrap-lg">
+          <canvas id="radarChart" role="img" aria-label="Radar chart of nursing competency scores"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list-details"></i>คะแนนรายสมรรถนะ</div>
+        <div id="detail-table"></div>
+      </div>
+    </div>
+
+    <div class="card" id="idp-card">
+      <div class="card-title"><i class="ti ti-target"></i>แผนพัฒนารายบุคคล (IDP) — สมรรถนะที่ต้องพัฒนา</div>
+      <div id="idp-content"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn" onclick="goStep(2)"><i class="ti ti-arrow-left"></i>แก้ไขคะแนน</button>
+      <button class="btn btn-success" onclick="saveRecord()"><i class="ti ti-device-floppy"></i>บันทึกผลการประเมิน</button>
+      <button class="btn btn-primary" onclick="printResult()"><i class="ti ti-printer"></i>พิมพ์ผล</button>
+      <button class="btn" onclick="resetAssess()" id="btn-reset-assess" style="display:none;border-color:var(--border-accent);color:var(--text-accent);"><i class="ti ti-refresh"></i>เริ่มประเมินใหม่</button>
+    </div>
+    <div id="save-confirm" class="hidden" style="margin-top:0.75rem;">
+      <div class="alert alert-success">
+        <i class="ti ti-circle-check"></i>
+        <div>บันทึกผลการประเมินเรียบร้อยแล้ว — กด <b>เริ่มประเมินใหม่</b> เพื่อประเมินบุคลากรคนต่อไป</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== QUIZ PAGE ========== -->
+<div class="page" id="page-quiz">
+  <div class="section-head">
+    <div>
+      <div class="section-title">แบบทดสอบความรู้</div>
+      <div class="section-sub">สมรรถนะพยาบาลเวรตรวจการนอกเวลา · 40 ข้อ</div>
+    </div>
+  </div>
+
+  <!-- CONSENT STEP -->
+  <div id="quiz-consent-form">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:0.5px solid var(--border);">
+        <div style="width:40px;height:40px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-shield-lock" style="font-size:20px;color:var(--primary);"></i>
+        </div>
+        <div>
+          <div style="font-size:16px;font-weight:700;">คำชี้แจงและความยินยอมในการเก็บ ใช้ และประมวลผลข้อมูลส่วนบุคคล</div>
+          <div style="font-size:12px;color:var(--text-muted);">กลุ่มภารกิจด้านการพยาบาล โรงพยาบาลกลาง</div>
+        </div>
+      </div>
+
+      <div style="font-size:14px;line-height:1.8;color:var(--text);">
+        <p style="margin-bottom:1rem;">กลุ่มภารกิจด้านการพยาบาล โรงพยาบาลกลาง มีความประสงค์เก็บรวบรวม ใช้ และประมวลผลข้อมูลของท่าน เพื่อใช้ในการประเมินสมรรถนะพยาบาลเวรตรวจการนอกเวลา การจัดทำแผนพัฒนารายบุคคล การติดตามความก้าวหน้าหลังการพัฒนา และการจัดทำ Dashboard เพื่อบริหารจัดการการพัฒนาบุคลากรทางการพยาบาล</p>
+
+        <div style="background:var(--gray-bg);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;">
+          <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="ti ti-database" style="font-size:15px;"></i>ข้อมูลที่เก็บรวบรวม</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">ข้อมูลพื้นฐานของบุคลากร หน่วยงาน ประสบการณ์การทำงาน ประวัติการอบรม คะแนน Pre-test/Post-test ผลการประเมินสมรรถนะ แผนพัฒนารายบุคคล และหลักฐานการพัฒนาที่เกี่ยวข้อง</div>
+        </div>
+
+        <div style="background:var(--gray-bg);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;">
+          <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="ti ti-target" style="font-size:15px;"></i>วัตถุประสงค์การใช้ข้อมูล</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">เพื่อการพัฒนาศักยภาพบุคลากร การวางแผนอบรม การติดตามผล และการพัฒนาคุณภาพบริการพยาบาลภายในองค์กรเท่านั้น ไม่นำไปใช้เพื่อวัตถุประสงค์อื่น</div>
+        </div>
+
+        <div style="background:var(--gray-bg);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;">
+          <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="ti ti-lock" style="font-size:15px;"></i>การรักษาความลับและการเข้าถึงข้อมูล</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">ข้อมูลของท่านจะถูกจำกัดการเข้าถึงเฉพาะผู้เกี่ยวข้อง ได้แก่ ผู้อำนวยการกลุ่มภารกิจ ผู้ช่วยผู้อำนวยการกลุ่มภารกิจ ผู้ประเมิน พี่เลี้ยง ผู้รับผิดชอบโครงการ และผู้ดูแลระบบที่ได้รับมอบหมาย โดยจะ<b>ไม่นำข้อมูลรายบุคคลไปเปิดเผยต่อบุคคลที่ไม่เกี่ยวข้อง</b> และการนำเสนอข้อมูลในภาพรวมจะใช้ในรูปแบบสถิติหรือรายงานสรุปเท่าที่จำเป็น</div>
+        </div>
+
+        <div style="background:var(--gray-bg);border-radius:var(--radius);padding:1rem;margin-bottom:1.25rem;">
+          <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><i class="ti ti-user-check" style="font-size:15px;"></i>สิทธิของเจ้าของข้อมูล</div>
+          <div style="font-size:13px;color:var(--text-muted);line-height:1.7;">ท่านมีสิทธิสอบถาม ขอแก้ไขข้อมูล หรือแจ้งความประสงค์เกี่ยวกับการใช้ข้อมูลตามช่องทางที่หน่วยงานกำหนด ตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)</div>
+        </div>
+
+        <div style="border:1.5px solid var(--border);border-radius:var(--radius);padding:1rem;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:12px;">การแสดงความยินยอม</div>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:10px;" id="consent-yes-label">
+            <input type="radio" name="consent" value="yes" id="consent-yes" onchange="handleConsent()" style="margin-top:2px;accent-color:var(--success);width:16px;height:16px;flex-shrink:0;">
+            <span style="font-size:13px;line-height:1.6;">ข้าพเจ้าได้รับทราบคำชี้แจงข้างต้นแล้ว และ <b>ยินยอม</b>ให้กลุ่มภารกิจด้านการพยาบาลเก็บรวบรวม ใช้ และประมวลผลข้อมูลส่วนบุคคลของข้าพเจ้า เพื่อการประเมินสมรรถนะ การพัฒนารายบุคคล และการจัดทำ Dashboard บริหารจัดการพัฒนาบุคลากรทางการพยาบาล</span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;" id="consent-no-label">
+            <input type="radio" name="consent" value="no" id="consent-no" onchange="handleConsent()" style="margin-top:2px;accent-color:var(--danger);width:16px;height:16px;flex-shrink:0;">
+            <span style="font-size:13px;line-height:1.6;"><b>ไม่ยินยอม</b></span>
+          </label>
+        </div>
+
+        <div id="consent-no-msg" class="hidden" style="margin-top:1rem;">
+          <div class="alert alert-danger">
+            <i class="ti ti-alert-circle"></i>
+            <div>เนื่องจากท่านไม่ให้ความยินยอม ท่านจะไม่สามารถทำแบบทดสอบได้ หากต้องการสอบถามเพิ่มเติมกรุณาติดต่อผู้รับผิดชอบโครงการ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group" id="consent-next-btn" style="display:none;">
+      <button class="btn btn-primary" onclick="proceedToProfile()"><i class="ti ti-arrow-right"></i>ถัดไป: กรอกข้อมูลผู้เข้าสอบ</button>
+    </div>
+  </div>
+
+  <!-- PROFILE STEP -->
+  <div id="quiz-profile-form" class="hidden">
+    <div id="quiz-autofill-banner" class="hidden">
+      <div class="alert alert-success" style="margin-bottom:1rem;">
+        <i class="ti ti-magic-wand"></i>
+        <div>ดึงข้อมูลจากหน้าประเมินสมรรถนะมาให้อัตโนมัติแล้ว — ตรวจสอบและแก้ไขได้หากต้องการ</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding-bottom:1rem;border-bottom:0.5px solid var(--border);">
+        <i class="ti ti-user-circle" style="font-size:20px;color:var(--primary);"></i>
+        <span style="font-size:15px;font-weight:600;">ข้อมูลผู้เข้าสอบ</span>
+        <span class="badge badge-green" style="margin-left:auto;"><i class="ti ti-shield-check"></i> ยินยอมแล้ว</span>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label required">ชื่อ–สกุล</label>
+          <input type="text" id="q-name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">หน่วยงาน</label>
+          <input type="text" id="q-dept">
+        </div>
+        <div class="form-group">
+          <label class="form-label">รอบการประเมิน</label>
+          <select id="q-round">
+            <option value="ครั้งแรก">ครั้งแรก (Pre-test)</option>
+            <option value="1 เดือน">1 เดือน (Post-test)</option>
+            <option value="3 เดือน">3 เดือน (Post-test)</option>
+            <option value="6 เดือน">6 เดือน (Post-test)</option>
+            <option value="ประจำปี">ประจำปี (Post-test)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="alert alert-warning">
+      <i class="ti ti-alert-triangle"></i>
+      <div>การทำแบบทดสอบครั้งแรก (Pre-test) สำหรับรอบ <b>ครั้งแรก</b> เท่านั้น รอบอื่น ๆ ถือเป็น Post-test</div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" onclick="backToConsent()"><i class="ti ti-arrow-left"></i>ย้อนกลับ</button>
+      <button class="btn btn-primary" onclick="startQuiz()"><i class="ti ti-pencil"></i>เริ่มทำแบบทดสอบ</button>
+    </div>
+  </div>
+
+  <div id="quiz-main" class="hidden">
+    <div class="card" style="padding:1rem 1.5rem;margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:500;" id="quiz-progress-label">ข้อ 1 จาก 40</div>
+        <div style="font-size:13px;color:var(--text-muted);" id="quiz-answered">ตอบแล้ว: 0/40</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="quiz-progress-bar" style="width:0%;"></div></div>
+    </div>
+    <div id="quiz-questions"></div>
+    <div class="btn-group" style="margin-top:1rem;">
+      <button class="btn btn-success" onclick="submitQuiz()"><i class="ti ti-check"></i>ส่งแบบทดสอบ</button>
+    </div>
+  </div>
+
+  <div id="quiz-result" class="hidden">
+    <div class="card">
+      <div class="result-card">
+        <div style="font-size:13px;color:var(--text-muted);" id="quiz-type-label">Pre-test</div>
+        <div class="result-score" id="q-score-display">0/40</div>
+        <div class="result-level" id="q-level-display">-</div>
+        <div id="q-badge-display" style="margin:8px 0;"></div>
+        <div style="font-size:13px;color:var(--text-muted);" id="q-action-display">-</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i>คะแนนรายหมวด</div>
+        <div class="chart-wrap">
+          <canvas id="quizBarChart" role="img" aria-label="Quiz score by category"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-list-check"></i>สรุปรายหมวด</div>
+        <div id="quiz-cat-summary"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-eye"></i>เฉลยคำตอบ</div>
+      <div id="quiz-answers-review"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="resetQuiz()"><i class="ti ti-refresh"></i>ทำแบบทดสอบใหม่</button>
+      <button class="btn btn-success" onclick="saveQuizRecord()"><i class="ti ti-device-floppy"></i>บันทึกผล</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== DASHBOARD PAGE ========== -->
+<div class="page" id="page-dashboard">
+  <div class="section-head">
+    <div>
+      <div class="section-title">แดชบอร์ดสำหรับผู้บริหาร</div>
+      <div class="section-sub">ภาพรวมสมรรถนะและผลการทดสอบความรู้</div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-sm" onclick="refreshDashboard()"><i class="ti ti-refresh"></i>รีเฟรช</button>
+      <button class="btn btn-sm btn-primary" onclick="openInfographic()"><i class="ti ti-chart-infographic"></i>สรุป Infographic / PDF</button>
+    </div>
+  </div>
+
+  <div class="grid-4" id="dash-metrics" style="margin-bottom:1rem;"></div>
+
+  <div class="dash-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar"></i>คะแนนเฉลี่ยสมรรถนะรายด้าน</div>
+      <div class="chart-wrap">
+        <canvas id="dashCompChart" role="img" aria-label="Average competency score by domain"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-donut"></i>การกระจายระดับสมรรถนะ</div>
+      <div class="chart-wrap">
+        <canvas id="dashLevelChart" role="img" aria-label="Distribution of competency levels"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-row">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-trending-up"></i>เปรียบเทียบ Pre-test vs Post-test</div>
+      <div class="chart-wrap">
+        <canvas id="dashPrePostChart" role="img" aria-label="Pre vs Post test comparison"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-users"></i>รายชื่อผู้รับการประเมินล่าสุด</div>
+      <div id="dash-nurse-list"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-alert-circle"></i>สมรรถนะที่ต้องพัฒนา (ต่ำกว่าเกณฑ์)</div>
+    <div id="dash-gaps"></div>
+  </div>
+</div>
+
+<script>
+const COMPETENCIES = [
+  { id:1, name:'ภาวะผู้นำและการตัดสินใจ', short:'ภาวะผู้นำ', weight:10, critical:false,
+    desc:'ความสามารถในการเป็นผู้นำ จัดลำดับความสำคัญ ตัดสินใจอย่างเหมาะสม',
+    behaviors: ['ระดับ 1: ลังเลตัดสินใจ ต้องพึ่งพาผู้อื่น', 'ระดับ 2: จัดลำดับได้บางส่วน ยังไม่มั่นใจ', 'ระดับ 3: ประเมิน จัดลำดับ ตัดสินใจได้เหมาะสม', 'ระดับ 4: นำทีมซับซ้อนได้ดี รวดเร็ว รอบคอบ', 'ระดับ 5: เป็นแบบอย่าง ให้คำปรึกษา พัฒนาระบบได้'] },
+  { id:2, name:'การบริหารอัตรากำลังและทรัพยากร', short:'บริหารอัตรากำลัง', weight:10, critical:false,
+    desc:'ประเมินภาระงาน ความเพียงพอของบุคลากร เครื่องมือ อุปกรณ์',
+    behaviors: ['ระดับ 1: ประเมินอัตรากำลังไม่ได้ แก้ไขล่าช้า', 'ระดับ 2: ประเมินได้บางส่วน ไม่เชื่อมโยงกับความเสี่ยง', 'ระดับ 3: ประสานเวรเสริม ยืมอุปกรณ์ได้ทันเวลา', 'ระดับ 4: วิเคราะห์แนวโน้ม วางแผนป้องกันล่วงหน้า', 'ระดับ 5: เสนอแนวทางพัฒนาระบบ เป็นต้นแบบ'] },
+  { id:3, name:'การประเมินผู้ป่วยเสี่ยงสูง', short:'ประเมินผู้ป่วยเสี่ยง', weight:15, critical:true,
+    desc:'ค้นหา ประเมิน ติดตามผู้ป่วยวิกฤต Sepsis, Stroke, STEMI, Trauma',
+    behaviors: ['ระดับ 1: ระบุผู้ป่วยเสี่ยงสูงไม่ได้ ประสานล่าช้า', 'ระดับ 2: ระบุได้บางกลุ่ม ยังไม่วิเคราะห์ครบ', 'ระดับ 3: ประเมิน Sepsis/Stroke/STEMI ประสานแพทย์ทันเวลา', 'ระดับ 4: วิเคราะห์เชิงระบบ คาดการณ์ความเสี่ยงล่วงหน้า', 'ระดับ 5: ช่วยทีมวางแผนป้องกัน เป็นผู้เชี่ยวชาญ'] },
+  { id:4, name:'การจัดการความเสี่ยงและความปลอดภัย', short:'ความปลอดภัย', weight:15, critical:true,
+    desc:'เฝ้าระวัง ป้องกัน จัดการความเสี่ยง Patient ID, Medication, Fall, Infection',
+    behaviors: ['ระดับ 1: ระบุความเสี่ยงไม่ได้ ไม่ดำเนินการ', 'ระดับ 2: ระบุบางประเด็น ขาดการติดตามส่งต่อ', 'ระดับ 3: เฝ้าระวัง Patient ID/Medication/Fall/Infection ได้', 'ระดับ 4: วิเคราะห์แนวโน้มซ้ำ เสนอแนวทางป้องกันเชิงระบบ', 'ระดับ 5: ถ่ายทอดบทเรียน พัฒนาระบบความปลอดภัย'] },
+  { id:5, name:'การสื่อสารและประสานงาน', short:'สื่อสาร/ประสานงาน', weight:10, critical:true,
+    desc:'สื่อสาร SBAR ประสานงานกับแพทย์ ทีมสหสาขา ผู้บริหาร',
+    behaviors: ['ระดับ 1: สื่อสารไม่ครบ ไม่รายงานตามลำดับขั้น', 'ระดับ 2: สื่อสารพื้นฐานได้ ขาดความชัดเจน', 'ระดับ 3: ใช้ SBAR รายงาน ประสานงานครบ ชัดเจน ทันเวลา', 'ระดับ 4: ประสานหลายหน่วยงานซับซ้อนได้ ลดความขัดแย้ง', 'ระดับ 5: สร้างระบบการสื่อสาร เป็นแบบอย่าง'] },
+  { id:6, name:'การนิเทศและให้คำปรึกษา', short:'นิเทศ/ให้คำปรึกษา', weight:10, critical:false,
+    desc:'นิเทศ ให้คำแนะนำ สนับสนุนหัวหน้าเวรและทีมพยาบาล',
+    behaviors: ['ระดับ 1: ให้คำแนะนำไม่สอดคล้องมาตรฐาน', 'ระดับ 2: ให้คำแนะนำเรื่องทั่วไปได้บางส่วน', 'ระดับ 3: ให้คำปรึกษา นิเทศ ช่วยแก้ไขปัญหาได้', 'ระดับ 4: เป็นพี่เลี้ยง ถ่ายทอดความรู้จากเหตุการณ์จริง', 'ระดับ 5: สร้างระบบนิเทศ พัฒนาทีมอย่างยั่งยืน'] },
+  { id:7, name:'การจัดการข้อร้องเรียนและบริการ', short:'ข้อร้องเรียน', weight:10, critical:false,
+    desc:'รับฟัง จัดการข้อร้องเรียน ลดความขัดแย้ง สื่อสารกับผู้ป่วยและญาติ',
+    behaviors: ['ระดับ 1: รับมือข้อร้องเรียนไม่ได้ สถานการณ์รุนแรงขึ้น', 'ระดับ 2: รับฟังเบื้องต้นได้ ขาดทักษะลดความตึงเครียด', 'ระดับ 3: รับฟัง แก้ไขเบื้องต้น ประสาน บันทึกส่งต่อได้', 'ระดับ 4: จัดการซับซ้อนได้ดี สร้างความเชื่อมั่น', 'ระดับ 5: นำข้อมูลพัฒนาระบบบริการ เป็นต้นแบบ'] },
+  { id:8, name:'จริยธรรม กฎหมาย มาตรฐานวิชาชีพ', short:'จริยธรรม/กฎหมาย', weight:5, critical:false,
+    desc:'ปฏิบัติตามจริยธรรม สิทธิผู้ป่วย ความลับ นโยบายโรงพยาบาล',
+    behaviors: ['ระดับ 1: ขาดความเข้าใจสิทธิผู้ป่วย อาจก่อความเสี่ยง', 'ระดับ 2: เข้าใจหลักการทั่วไป ต้องได้รับคำแนะนำ', 'ระดับ 3: ปฏิบัติตามจริยธรรม กฎหมาย ให้คำแนะนำทีมได้', 'ระดับ 4: วิเคราะห์ประเด็นซับซ้อนได้ ประสานผู้เกี่ยวข้อง', 'ระดับ 5: เป็นที่ปรึกษาจริยธรรม พัฒนาแนวทางองค์กร'] },
+  { id:9, name:'การบริหารสถานการณ์ฉุกเฉิน', short:'สถานการณ์ฉุกเฉิน', weight:10, critical:true,
+    desc:'ตอบสนอง ประสานงาน บริหารเหตุฉุกเฉิน อุบัติเหตุหมู่ ภัยพิบัติ',
+    behaviors: ['ระดับ 1: ไม่ทราบแนวทาง ประสานตามระบบไม่ได้', 'ระดับ 2: ปฏิบัติได้บางส่วน ยังไม่คล่องสั่งการ', 'ระดับ 3: ร่วมบริหารฉุกเฉิน รายงานตามระบบได้', 'ระดับ 4: นำทีมฉุกเฉินซับซ้อน ประสานหลายหน่วยงาน', 'ระดับ 5: สรุปบทเรียน พัฒนาระบบฉุกเฉินองค์กร'] },
+  { id:10, name:'การบันทึก รายงาน และพัฒนาคุณภาพ', short:'บันทึก/รายงาน', weight:5, critical:true,
+    desc:'บันทึกเหตุการณ์สำคัญ รายงาน วิเคราะห์ข้อมูล พัฒนาคุณภาพ',
+    behaviors: ['ระดับ 1: บันทึกไม่ครบ ขาดการรายงานสำคัญ', 'ระดับ 2: บันทึกพื้นฐานได้ ยังไม่วิเคราะห์ปัญหา', 'ระดับ 3: บันทึก รายงาน ระบุปัญหา การแก้ไข ข้อเสนอแนะ', 'ระดับ 4: วิเคราะห์แนวโน้ม เสนอพัฒนาคุณภาพ', 'ระดับ 5: เชื่อมโยง KPI/ความเสี่ยง/แผนพัฒนาองค์กร'] }
+];
+
+const QUESTIONS = [
+  {id:1,cat:1,q:'บทบาทสำคัญที่สุดของพยาบาลเวรตรวจการนอกเวลา คือข้อใด',opts:['กำกับ สนับสนุน ประสานงาน และแก้ไขปัญหาเพื่อให้บริการพยาบาลปลอดภัยต่อเนื่อง','ตรวจสอบเอกสารทุกหน่วยงานให้ครบถ้วน','ปฏิบัติหน้าที่แทนหัวหน้าหอผู้ป่วยทุกเรื่อง','รับผิดชอบเฉพาะการจัดอัตรากำลังในช่วงนอกเวลาราชการ'],ans:0},
+  {id:2,cat:1,q:'เมื่อพบหลายปัญหาเกิดขึ้นพร้อมกัน เวรตรวจการควรตัดสินใจโดยยึดหลักใดเป็นอันดับแรก',opts:['ปัญหาที่แก้ไขง่ายที่สุด','ปัญหาที่หัวหน้าเวรร้องขอก่อน','ปัญหาที่เกี่ยวข้องกับเอกสารรายงานก่อน','ปัญหาที่กระทบความปลอดภัยของผู้ป่วยมากที่สุด'],ans:3},
+  {id:3,cat:1,q:'ลักษณะของการตัดสินใจที่เหมาะสมของเวรตรวจการ คือข้อใด',opts:['ส่งต่อให้หัวหน้าเวรตัดสินใจเองทั้งหมด','ประเมินสถานการณ์ จัดลำดับความเร่งด่วน ประสานผู้เกี่ยวข้อง และติดตามผล','ตัดสินใจเร็วโดยไม่ต้องประสานใคร','รอผู้บริหารสั่งการทุกครั้ง'],ans:1},
+  {id:4,cat:1,q:'หัวหน้าเวรไม่มั่นใจว่าจะรายงานแพทย์หรือไม่ เนื่องจากผู้ป่วยเริ่มมีอาการเปลี่ยนแปลงเล็กน้อย พยาบาลเวรตรวจการควรดำเนินการอย่างไร',opts:['ให้รอดูอาการก่อนจนกว่าจะมีอาการชัดเจน','ให้หัวหน้าเวรตัดสินใจเอง เพราะเป็นผู้ดูแลผู้ป่วยโดยตรง','บันทึกไว้ในรายงานเวรตรวจการเพื่อส่งต่อวันรุ่งขึ้น','ร่วมประเมินข้อมูล จัดระดับความเร่งด่วน สนับสนุนการรายงานแพทย์ และกำหนดแผนติดตามอาการ'],ans:3},
+  {id:5,cat:2,q:'ข้อมูลใดสำคัญที่สุดในการประเมินความเพียงพอของอัตรากำลังนอกเวลาราชการ',opts:['จำนวนเตียงทั้งหมดของหน่วยงาน','จำนวนพยาบาลประจำหน่วยงานทั้งหมด','จำนวนผู้ป่วย ภาระงาน ความรุนแรงของผู้ป่วย และสมรรถนะของบุคลากรในเวร','จำนวนบุคลากรที่ขึ้นเวรเทียบกับเวรเมื่อวาน'],ans:2},
+  {id:6,cat:2,q:'หากพบว่าหอผู้ป่วยมีผู้ป่วยหนักหลายรายและอัตรากำลังไม่เพียงพอ เวรตรวจการควรดำเนินการอย่างไร',opts:['บันทึกไว้แล้วให้หน่วยงานแก้ไขเอง','แจ้งให้พยาบาลทำงานให้เร็วขึ้น','รอจนเกิดอุบัติการณ์แล้วจึงรายงาน','ประเมินความเสี่ยง จัดลำดับงานสำคัญ ประสานกำลังเสริมหรือความช่วยเหลือ และติดตามผล'],ans:3},
+  {id:7,cat:2,q:'ข้อใดเป็นตัวอย่างการบริหารทรัพยากรที่เหมาะสมของเวรตรวจการ',opts:['ประสานยืมอุปกรณ์จำเป็นจากหน่วยงานที่พร้อมกว่าเมื่อผู้ป่วยมีความจำเป็นเร่งด่วน','สั่งให้ทุกหน่วยงานเก็บอุปกรณ์ไว้เอง','ให้ญาติผู้ป่วยจัดหาอุปกรณ์แทน','แจ้งปัญหาไว้ในรายงานโดยไม่ต้องแก้ไขในเวรนั้น'],ans:0},
+  {id:8,cat:2,q:'ข้อใดสะท้อนการบริหารอัตรากำลังเชิงป้องกันของพยาบาลเวรตรวจการได้ดีที่สุด',opts:['รอให้หน่วยงานแจ้งขอกำลังเสริมก่อนทุกครั้ง','ประเมินแนวโน้มภาระงาน ผู้ป่วยรับใหม่ ผู้ป่วยหนัก และความเสี่ยงของหน่วยงาน เพื่อวางแผนช่วยเหลือล่วงหน้า','ตรวจสอบจำนวนบุคลากรเฉพาะต้นเวรเท่านั้น','ให้ทุกหน่วยงานบริหารอัตรากำลังภายในหน่วยงานเองโดยไม่ต้องประสานกัน'],ans:1},
+  {id:9,cat:3,q:'ผู้ป่วยกลุ่มใดควรได้รับการติดตามเป็นพิเศษจากเวรตรวจการนอกเวลา',opts:['ผู้ป่วยที่ญาติมาเยี่ยมจำนวนมาก','ผู้ป่วยที่รอจำหน่ายกลับบ้าน','ผู้ป่วยที่นอนโรงพยาบาลมานานเท่านั้น','ผู้ป่วย NEWS/EWS สูง ผู้ป่วยอาการเปลี่ยนแปลง ผู้ป่วยรอ ICU หรือผู้ป่วยวิกฤต'],ans:3},
+  {id:10,cat:3,q:'เมื่อหัวหน้าเวรรายงานว่าผู้ป่วย Sepsis มีความดันโลหิตต่ำลง เวรตรวจการควรทำสิ่งใดก่อน',opts:['ตรวจสอบว่ามีการประเมินซ้ำ รายงานแพทย์ ให้การรักษาตามแผน และติดตามอาการอย่างใกล้ชิด','รอประเมินซ้ำในเวรถัดไป','แจ้งให้ญาติสังเกตอาการ','บันทึกไว้เป็นข้อมูลเวรตรวจโดยไม่ต้องดำเนินการเพิ่ม'],ans:0},
+  {id:11,cat:3,q:'ข้อใดสะท้อนการดูแลผู้ป่วยอาการเปลี่ยนแปลงที่เหมาะสมที่สุด',opts:['รายงานแพทย์แล้วถือว่าสิ้นสุดหน้าที่','รอให้ผู้ป่วยมีอาการชัดเจนก่อนจึงดำเนินการ','ประเมินซ้ำ รายงานแพทย์ ดำเนินการตามแผน ติดตามผล และส่งต่อข้อมูลต่อเนื่อง','ให้พยาบาลเจ้าของไข้ตัดสินใจเองทั้งหมด'],ans:2},
+  {id:12,cat:3,q:'ผู้ป่วยรายใดควรได้รับการติดตามเร่งด่วนที่สุดจากพยาบาลเวรตรวจการ',opts:['ผู้ป่วยรอผลตรวจทางห้องปฏิบัติการตามแผน','ผู้ป่วยหลังผ่าตัดที่ vital signs คงที่และปวดแผลเล็กน้อย','ผู้ป่วยเตรียมจำหน่ายกลับบ้านในวันถัดไป','ผู้ป่วยสูงอายุมีไข้ หายใจเร็ว ซึมลง และความดันโลหิตเริ่มต่ำ'],ans:3},
+  {id:13,cat:4,q:'ประเด็นใดเป็นความเสี่ยงสำคัญที่เวรตรวจการควรนิเทศเชิงรุก',opts:['Patient Identification, Medication Safety, Blood Safety, Fall, Pressure Injury, Infection Prevention','การจัดแฟ้มเอกสารของหน่วยงาน','การตกแต่งหอผู้ป่วย','การจัดตารางประชุมประจำเดือน'],ans:0},
+  {id:14,cat:4,q:'หากพบว่าผู้ป่วยไม่มีสายรัดข้อมือก่อนให้เลือด เวรตรวจการควรทำอย่างไร',opts:['ให้ดำเนินการให้เลือดต่อ เพราะมีใบสั่งแพทย์แล้ว','แจ้งให้พยาบาลระวังมากขึ้นแต่ให้เลือดต่อได้','หยุดกระบวนการให้เลือดทันที ตรวจสอบตัวตนให้ถูกต้อง และแก้ไขก่อนดำเนินการต่อ','บันทึกไว้เป็นข้อเสนอแนะหลังจบเวร'],ans:2},
+  {id:15,cat:4,q:'การจัดการอุบัติการณ์ที่ถูกต้องควรประกอบด้วยข้อใด',opts:['แก้ไขเฉพาะผู้ป่วยรายนั้นโดยไม่ต้องรายงาน','หาผู้กระทำผิดก่อนเป็นอันดับแรก','รอประชุมประจำเดือนจึงค่อยดำเนินการ','ลดอันตรายทันที รายงานตามระบบ วิเคราะห์สาเหตุเบื้องต้น และติดตามป้องกันการเกิดซ้ำ'],ans:3},
+  {id:16,cat:4,q:'หากพบว่าเกิด near miss จากการเตรียมยาผิดชนิด แต่ตรวจพบก่อนให้ยาแก่ผู้ป่วย พยาบาลเวรตรวจการควรดำเนินการอย่างไร',opts:['ไม่ต้องรายงานเพราะยังไม่ถึงผู้ป่วย','ให้แก้ไขทันที รายงานตามระบบความเสี่ยง และใช้เป็นบทเรียนเพื่อป้องกันการเกิดซ้ำ','ตักเตือนผู้เตรียมยาและจบเรื่อง','รอให้หัวหน้าหอผู้ป่วยพิจารณาในวันทำการ'],ans:1},
+  {id:17,cat:5,q:'รูปแบบการสื่อสารที่เหมาะสมเมื่อต้องรายงานแพทย์หรือผู้บริหารในสถานการณ์เร่งด่วน คือข้อใด',opts:['เล่าเหตุการณ์ทั้งหมดตามลำดับเวลาโดยละเอียด','ส่งข้อความสั้น ๆ ว่า "ผู้ป่วยไม่ดี"','ใช้ SBAR หรือรูปแบบสื่อสารที่สั้น ชัดเจน ครบถ้วน','ให้หัวหน้าเวรรายงานเองโดยไม่ต้องติดตาม'],ans:2},
+  {id:18,cat:5,q:'ข้อใดเป็นองค์ประกอบของ SBAR',opts:['Safety, Behavior, Action, Record','Situation, Background, Assessment, Recommendation','Service, Bed, Admission, Report','Staff, Bed, Accident, Risk'],ans:1},
+  {id:19,cat:5,q:'การประสานงานที่มีประสิทธิภาพควรมีลักษณะอย่างไร',opts:['แจ้งข้อมูลเฉพาะปัญหา ไม่ต้องเสนอแนวทาง','แจ้งเฉพาะหน่วยงานของตนเอง','โทรแจ้งหลายคนพร้อมกันโดยไม่ต้องกำหนดผู้รับผิดชอบ','สื่อสารปัญหา ความเร่งด่วน ข้อมูลสำคัญ สิ่งที่ดำเนินการแล้ว และสิ่งที่ต้องการให้ช่วยเหลือ'],ans:3},
+  {id:20,cat:5,q:'ข้อใดเป็นตัวอย่างการสื่อสารแบบ SBAR ที่เหมาะสมที่สุดเมื่อรายงานผู้ป่วยทรุดลง',opts:['ผู้ป่วยเตียง 12 มี SpO₂ 86% ขณะให้ออกซิเจน 5 L/min มีประวัติปอดอักเสบ ประเมินแล้วหอบมาก RR 32 ครั้ง/นาที ขอให้แพทย์มาประเมินด่วน','ผู้ป่วยดูไม่ค่อยดี ช่วยมาดูหน่อย','ผู้ป่วยเตียง 12 เหนื่อยมาก ญาติกังวลมาก','ผู้ป่วยหอบ รายละเอียดอยู่ในเวชระเบียนแล้ว'],ans:0},
+  {id:21,cat:6,q:'การนิเทศของเวรตรวจการนอกเวลาควรมีลักษณะอย่างไร',opts:['เน้นจับผิดการทำงานของบุคลากร','ตรวจทุกเรื่องให้ละเอียดเท่ากันทุกหน่วยงาน','นิเทศเฉพาะเมื่อมีคำสั่งจากผู้บริหาร','สั้น กระชับ มุ่งความปลอดภัย ให้คำแนะนำที่ปฏิบัติได้ทันที'],ans:3},
+  {id:22,cat:6,q:'ข้อใดเป็นตัวอย่างของ Micro-coaching ที่เหมาะสม',opts:['ตำหนิพยาบาลต่อหน้าผู้ป่วยเพื่อให้จดจำ','ชี้ให้เห็นสิ่งที่ทำได้ดี ระบุสิ่งที่ต้องปรับ และแนะนำวิธีแก้ไขทันที','บันทึกข้อผิดพลาดโดยไม่บอกหน่วยงาน','ให้พยาบาลไปอ่านคู่มือเองหลังจบเวร'],ans:1},
+  {id:23,cat:6,q:'เมื่อพบว่าบันทึกทางการพยาบาลของผู้ป่วยเสี่ยงสูงไม่สะท้อนการประเมินซ้ำ เวรตรวจการควรทำอย่างไร',opts:['แนะนำให้บันทึกเพิ่มเติมให้สะท้อนอาการ การประเมิน การดูแล และผลการติดตาม','ปล่อยไว้เพราะเป็นหน้าที่ของพยาบาลเจ้าของไข้','รายงานผู้บริหารทันทีโดยไม่ต้องพูดกับหน่วยงาน','ให้แก้ไขย้อนหลังทุกแฟ้มในหน่วยงานทันที'],ans:0},
+  {id:24,cat:6,q:'ข้อใดเป็นหลักสำคัญของการนิเทศหน้างานในช่วงนอกเวลาราชการที่มีเวลาจำกัด',opts:['ตรวจรายละเอียดทุกแฟ้มให้ครบถ้วนก่อนจึงให้คำแนะนำ','เน้นการตรวจความผิดพลาดของบุคลากรเป็นหลัก','เลือกนิเทศตามประเด็นเสี่ยงสำคัญ ให้ข้อเสนอแนะสั้น ชัดเจน และติดตามเฉพาะเรื่องจำเป็น','ให้หน่วยงานเขียนรายงานปัญหามาส่งแทนการนิเทศหน้างาน'],ans:2},
+  {id:25,cat:7,q:'เมื่อผู้ป่วยหรือญาติร้องเรียนในช่วงนอกเวลาราชการ เวรตรวจการควรเริ่มต้นด้วยข้อใด',opts:['ส่งเรื่องให้วันทำการโดยไม่ต้องรับฟัง','รับฟังอย่างสุภาพ เป็นกลาง ประเมินปัญหา และดำเนินการแก้ไขเบื้องต้น','อธิบายว่าบุคลากรมีงานมาก','แจ้งให้ญาติทำหนังสือร้องเรียนเท่านั้น'],ans:1},
+  {id:26,cat:7,q:'ข้อร้องเรียนลักษณะใดควรรายงานผู้บริหารทันที',opts:['ผู้ป่วยขอเปลี่ยนอาหาร','ญาติสอบถามเวลาเยี่ยม','ข้อร้องเรียนรุนแรง มีความขัดแย้งสูง หรือมีแนวโน้มกระทบชื่อเสียงและความเชื่อมั่นของโรงพยาบาล','ผู้ป่วยขอใบรับรองแพทย์'],ans:2},
+  {id:27,cat:7,q:'การสื่อสารกับผู้ป่วยและญาติในสถานการณ์ตึงเครียดควรหลีกเลี่ยงข้อใด',opts:['โต้แย้งทันทีเพื่อปกป้องหน่วยงาน','รับฟังโดยไม่ขัดจังหวะ','ใช้น้ำเสียงสุภาพ','สรุปประเด็นและแจ้งแนวทางช่วยเหลือ'],ans:0},
+  {id:28,cat:7,q:'เมื่อญาติผู้ป่วยไม่พอใจที่รอนานและเริ่มใช้ถ้อยคำรุนแรง พยาบาลเวรตรวจการควรดำเนินการอย่างไรเป็นอันดับแรก',opts:['แจ้งเจ้าหน้าที่รักษาความปลอดภัยทันทีโดยไม่ต้องพูดคุย','ชี้แจงว่าบุคลากรกำลังยุ่งและให้รอต่อ','บอกให้ญาติเขียนข้อร้องเรียนในวันทำการ','เข้าไปรับฟังอย่างสงบ แยกพื้นที่พูดคุยหากเหมาะสม ประเมินความเสี่ยง และประสานผู้เกี่ยวข้องให้ข้อมูลหรือแก้ไขปัญหา'],ans:3},
+  {id:29,cat:8,q:'ข้อใดเป็นหลักสำคัญในการปฏิบัติหน้าที่ของเวรตรวจการตามมาตรฐานวิชาชีพ',opts:['ยึดความสะดวกของบุคลากรเป็นหลัก','ให้ญาติเป็นผู้ตัดสินใจแทนทุกกรณี','ปฏิบัติตามจริยธรรม สิทธิผู้ป่วย ความลับผู้ป่วย กฎหมาย และมาตรฐานการพยาบาล','เปิดเผยข้อมูลผู้ป่วยให้หน่วยงานอื่นทราบได้ทุกเรื่อง'],ans:2},
+  {id:30,cat:8,q:'หากญาติสอบถามข้อมูลผู้ป่วยรายอื่น เวรตรวจการควรตอบอย่างไร',opts:['ให้ข้อมูลเพื่อสร้างความเข้าใจ','ปฏิเสธอย่างสุภาพและรักษาความลับของผู้ป่วย','ให้หัวหน้าเวรเป็นผู้ตอบแทน','เปิดเผยเฉพาะข้อมูลที่ไม่รุนแรง'],ans:1},
+  {id:31,cat:8,q:'กรณีพบการปฏิบัติที่อาจกระทบสิทธิผู้ป่วย เวรตรวจการควรทำอย่างไร',opts:['แนะนำแก้ไขทันที ประสานผู้เกี่ยวข้อง และบันทึก/รายงานตามความเหมาะสม','เพิกเฉยหากไม่เกิดอุบัติการณ์','รอให้ผู้ป่วยร้องเรียนก่อน','แจ้งเฉพาะพยาบาลเจ้าของไข้โดยไม่ติดตามผล'],ans:0},
+  {id:32,cat:8,q:'หากพบว่ามีการพูดคุยข้อมูลผู้ป่วยในพื้นที่ที่บุคคลอื่นได้ยิน พยาบาลเวรตรวจการควรทำอย่างไร',opts:['ไม่ต้องดำเนินการ หากไม่ได้เปิดเผยชื่อผู้ป่วยชัดเจน','รายงานผู้บริหารทันทีโดยไม่ต้องแจ้งทีม','ให้หยุดการส่งเวรทั้งหมดทันที','เตือนและแนะนำให้ย้ายการสื่อสารข้อมูลผู้ป่วยไปยังพื้นที่เหมาะสม เพื่อรักษาความลับและศักดิ์ศรีของผู้ป่วย'],ans:3},
+  {id:33,cat:9,q:'เหตุการณ์ใดต้องรายงานผู้บริหารหรือผู้เกี่ยวข้องทันที',opts:['ผู้ป่วยขอเปลี่ยนห้องพัก','ญาติขอสำเนาเอกสาร','ระบบออกซิเจนขัดข้อง ผู้ป่วยเสียชีวิตผิดปกติ อุบัติเหตุหมู่ หรือเหตุการณ์รุนแรงที่กระทบความปลอดภัย','พยาบาลลืมลงชื่อในสมุดเวร'],ans:2},
+  {id:34,cat:9,q:'เมื่อเกิดเหตุการณ์ฉุกเฉินที่กระทบหลายหน่วยงาน เวรตรวจการควรทำอย่างไร',opts:['ประเมินสถานการณ์ ประสานระบบฉุกเฉิน/ผู้เกี่ยวข้อง จัดลำดับความสำคัญ และรายงานตามลำดับขั้น','รอให้แต่ละหน่วยงานจัดการเอง','บันทึกเหตุการณ์หลังจบเวรเท่านั้น','โทรแจ้งเฉพาะหัวหน้าเวรของหน่วยงานที่เกิดเหตุ'],ans:0},
+  {id:35,cat:9,q:'ความพร้อมของหน่วยงานต่อภาวะฉุกเฉินควรตรวจสอบเรื่องใด',opts:['ความสวยงามของห้องทำงาน','จำนวนแฟ้มเอกสาร','จำนวนญาติในหอผู้ป่วย','Emergency cart, oxygen, suction, defibrillator, ambu bag, emergency drug และช่องทางเรียกทีมช่วยเหลือ'],ans:3},
+  {id:36,cat:9,q:'เมื่อพบว่าระบบออกซิเจนของหน่วยงานขัดข้องในขณะที่มีผู้ป่วยใช้ออกซิเจนหลายราย เวรตรวจการควรทำอย่างไร',opts:['รอฝ่ายช่างมาตรวจสอบก่อนจึงค่อยดำเนินการ','ประเมินผู้ป่วยที่ได้รับผลกระทบทันที จัดหาแหล่งออกซิเจนสำรอง ประสานฝ่ายช่าง แพทย์ หน่วยงานสนับสนุน และรายงานผู้บริหารตามระบบ','ให้พยาบาลในหน่วยงานแก้ไขเอง','บันทึกปัญหาไว้ในรายงานเวรตรวจและส่งต่อเวรถัดไป'],ans:1},
+  {id:37,cat:10,q:'รายงานเวรตรวจการพยาบาลที่ดีควรมีข้อมูลใด',opts:['เฉพาะจำนวนหน่วยงานที่ตรวจเยี่ยม','เฉพาะชื่อหัวหน้าเวร','สถานการณ์สำคัญ ปัญหาที่พบ การดำเนินการแก้ไข การประสานงาน ผลลัพธ์ และประเด็นติดตามต่อ','เฉพาะเรื่องที่รายงานผู้บริหารแล้ว'],ans:2},
+  {id:38,cat:10,q:'ข้อใดแสดงถึงการใช้ข้อมูลเวรตรวจการเพื่อพัฒนาคุณภาพ',opts:['นำข้อมูลปัญหาซ้ำ อุบัติการณ์ ข้อร้องเรียน และความเสี่ยงมาวิเคราะห์แนวโน้มและจัดทำแผนปรับปรุง','เก็บรายงานไว้โดยไม่วิเคราะห์','ใช้รายงานเพื่อประเมินความผิดของบุคลากรเท่านั้น','รายงานเฉพาะเหตุการณ์รุนแรง ส่วนเหตุการณ์เล็กไม่ต้องบันทึก'],ans:0},
+  {id:39,cat:10,q:'หากพบปัญหาที่ยังไม่สามารถปิดเรื่องในเวรนั้นได้ เวรตรวจการควรทำอย่างไร',opts:['ไม่ต้องบันทึกเพราะยังไม่จบเรื่อง','รอให้หน่วยงานแจ้งกลับเอง','ระบุประเด็นค้าง ผู้รับผิดชอบติดตาม แนวทางดำเนินการต่อ และส่งต่อเวรถัดไปหรือผู้บริหาร','บันทึกว่า "ยังไม่เรียบร้อย" โดยไม่ต้องระบุรายละเอียด'],ans:2},
+  {id:40,cat:10,q:'ข้อใดเป็นการบันทึกรายงานเวรตรวจการที่เหมาะสมที่สุดเมื่อพบปัญหาอัตรากำลังไม่เพียงพอ',opts:['"อัตรากำลังไม่พอ"','"หอผู้ป่วยแจ้งว่าคนไม่พอ ให้แก้ไขเอง"','"แจ้งผู้บริหารแล้ว"','"หอผู้ป่วยอายุรกรรมมี RN 2 คน ดูแลผู้ป่วย 32 ราย มีผู้ป่วยหนัก 5 ราย ประสานเวรเสริม 1 คน และให้หัวหน้าเวรจัดลำดับงาน ติดตามซ้ำเวลา 22.00 น."'],ans:3}
+];
+
+const CAT_NAMES = ['','ภาวะผู้นำ','บริหารอัตรากำลัง','ผู้ป่วยเสี่ยงสูง','ความเสี่ยง/ความปลอดภัย','สื่อสาร/ประสานงาน','นิเทศ/ให้คำปรึกษา','ข้อร้องเรียน','จริยธรรม/กฎหมาย','สถานการณ์ฉุกเฉิน','บันทึก/รายงาน'];
+
+let assessRatings = {};
+let quizAnswers = {};
+let records = JSON.parse(localStorage.getItem('nurseRecords')||'[]');
+let quizRecords = JSON.parse(localStorage.getItem('quizRecords')||'[]');
+let radarChartInst = null;
+let quizBarChartInst = null;
+let dashCompChartInst = null;
+let dashLevelChartInst = null;
+let dashPrePostChartInst = null;
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='dashboard') refreshDashboard();
+}
+
+function getLevelInfo(score) {
+  if(score>=90) return {level:5,label:'เชี่ยวชาญ/ดีเยี่ยม',badge:'badge-purple',action:'มอบหมายเป็นพี่เลี้ยง วิทยากร และแกนนำพัฒนาระบบ'};
+  if(score>=80) return {level:4,label:'ชำนาญ',badge:'badge-green',action:'ปฏิบัติหน้าที่ได้ พัฒนาต่อยอดด้านสถานการณ์ซับซ้อน'};
+  if(score>=70) return {level:3,label:'ผ่านเกณฑ์',badge:'badge-blue',action:'ผ่านเกณฑ์ขั้นต่ำ ทบทวนเฉพาะหมวดที่ตอบผิด'};
+  if(score>=60) return {level:2,label:'ต้องพัฒนา',badge:'badge-amber',action:'จัดทำแผนพัฒนารายบุคคล Coaching ประเมินซ้ำภายใน 1–3 เดือน'};
+  return {level:1,label:'ไม่ผ่านเกณฑ์',badge:'badge-red',action:'อบรมเข้มข้น ฝึกสถานการณ์จำลอง ปฏิบัติคู่พี่เลี้ยง'};
+}
+
+function initHomeTable() {
+  const tbody = document.getElementById('comp-overview-tbody');
+  tbody.innerHTML = COMPETENCIES.map(c=>`
+    <tr>
+      <td style="color:var(--text-muted);font-size:13px;">${c.id}</td>
+      <td>
+        <div class="comp-name">${c.name} ${c.critical?'<span class="badge badge-red" style="font-size:10px;padding:1px 6px;">สำคัญ</span>':''}</div>
+        <div class="comp-desc">${c.desc}</div>
+      </td>
+      <td style="text-align:center;"><span class="weight-badge">${c.weight}%</span></td>
+      <td><span class="badge badge-blue">ระดับ 3 ขึ้นไป${c.critical?' (บังคับ)':''}</span></td>
+    </tr>
+  `).join('');
+}
+
+function initCompForms() {
+  const container = document.getElementById('comp-forms');
+  container.innerHTML = COMPETENCIES.map(c=>`
+    <div class="card" style="margin-bottom:1rem;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+        <div>
+          <div style="font-size:15px;font-weight:600;">${c.id}. ${c.name} ${c.critical?'<span class="badge badge-red" style="font-size:10px;padding:1px 6px;">สำคัญ</span>':''}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">${c.desc}</div>
+          <div style="font-size:11px;color:var(--primary);margin-top:2px;">น้ำหนัก ${c.weight}%</div>
+        </div>
+      </div>
+      <div class="rating-group" id="rating-group-${c.id}">
+        ${[1,2,3,4,5].map(r=>`
+          <button class="rating-btn r${r}" onclick="setRating(${c.id},${r})" id="r${c.id}-${r}" title="${c.behaviors[r-1]}">
+            <div style="font-size:16px;font-weight:700;">${r}</div>
+            <div class="rating-label">${['ไม่ผ่าน','ต้องพัฒนา','ผ่านเกณฑ์','ชำนาญ','เชี่ยวชาญ'][r-1]}</div>
+          </button>
+        `).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px;" id="behavior-${c.id}">เลือกระดับเพื่อดูพฤติกรรมบ่งชี้</div>
+    </div>
+  `).join('');
+}
+
+function setRating(compId, val) {
+  assessRatings[compId] = val;
+  const grp = document.getElementById('rating-group-'+compId);
+  grp.querySelectorAll('.rating-btn').forEach((b,i)=>{
+    b.classList.toggle('selected', i+1===val);
+  });
+  const comp = COMPETENCIES.find(c=>c.id===compId);
+  document.getElementById('behavior-'+compId).textContent = comp.behaviors[val-1];
+}
+
+function goStep(n) {
+  [1,2,3].forEach(i=>{
+    document.getElementById('assess-step'+i).classList.toggle('hidden', i!==n);
+    const lbl = document.getElementById('step'+i+'-label');
+    lbl.classList.remove('active','done');
+    if(i===n) lbl.classList.add('active');
+    else if(i<n) lbl.classList.add('done');
+  });
+}
+
+function goAssessStep2() {
+  const name = document.getElementById('a-name').value.trim();
+  if(!name) { alert('กรุณากรอกชื่อ–สกุล'); return; }
+  initCompForms();
+  goStep(2);
+}
+
+function goAssessStep3() {
+  if(Object.keys(assessRatings).length < 10) {
+    alert('กรุณาประเมินสมรรถนะให้ครบทุกด้าน ('+Object.keys(assessRatings).length+'/10)');
+    return;
+  }
+  calcAssessResult();
+  goStep(3);
+}
+
+function calcAssessResult() {
+  let total = 0;
+  COMPETENCIES.forEach(c=>{
+    const r = assessRatings[c.id]||1;
+    total += (r/5)*100 * (c.weight/100);
+  });
+  const score = Math.round(total);
+  const info = getLevelInfo(score);
+
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-score').style.color = score>=80?'var(--success)':score>=70?'var(--primary)':score>=60?'var(--warning)':'var(--danger)';
+  document.getElementById('res-level').textContent = 'ระดับ '+info.level+' — '+info.label;
+  document.getElementById('res-badge').innerHTML = '<span class="badge '+info.badge+'"><i class="ti ti-award"></i> '+info.label+'</span>';
+  document.getElementById('res-action').textContent = info.action;
+
+  buildDetailTable();
+  buildRadar();
+  buildIDP();
+}
+
+function buildDetailTable() {
+  const html = COMPETENCIES.map(c=>{
+    const r = assessRatings[c.id]||1;
+    const colors = ['badge-red','badge-amber','badge-blue','badge-green','badge-purple'];
+    const labels = ['ไม่ผ่าน','ต้องพัฒนา','ผ่านเกณฑ์','ชำนาญ','เชี่ยวชาญ'];
+    const belowMin = c.critical && r < 3;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);${belowMin?'background:var(--danger-light);margin:0 -8px;padding:8px;border-radius:6px;margin-bottom:4px;':''}">
+      <div style="font-size:13px;flex:1;">${c.id}. ${c.name}</div>
+      <span class="badge ${colors[r-1]}">${r} — ${labels[r-1]}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('detail-table').innerHTML = html;
+}
+
+function buildRadar() {
+  if(radarChartInst) radarChartInst.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarChartInst = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: COMPETENCIES.map(c=>c.short),
+      datasets: [{
+        label: 'คะแนนสมรรถนะ',
+        data: COMPETENCIES.map(c=>assessRatings[c.id]||0),
+        backgroundColor: 'rgba(24,95,165,0.15)',
+        borderColor: '#185FA5',
+        borderWidth: 2,
+        pointBackgroundColor: '#185FA5',
+        pointRadius: 4
+      },{
+        label: 'เกณฑ์ขั้นต่ำ (3)',
+        data: COMPETENCIES.map(()=>3),
+        backgroundColor: 'rgba(163,45,45,0.05)',
+        borderColor: '#A32D2D',
+        borderWidth: 1.5,
+        borderDash: [4,4],
+        pointRadius: 0
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { r: { min:0, max:5, ticks:{stepSize:1, font:{size:10}}, pointLabels:{font:{size:10}} }},
+      plugins: { legend:{ display:true, position:'bottom', labels:{font:{size:11}} }}
+    }
+  });
+}
+
+function buildIDP() {
+  const gaps = COMPETENCIES.filter(c=>(assessRatings[c.id]||1) < 3);
+  if(gaps.length===0) {
+    document.getElementById('idp-content').innerHTML = '<div class="alert alert-success"><i class="ti ti-check"></i>ผ่านเกณฑ์ขั้นต่ำทุกด้าน ไม่มีสมรรถนะที่ต้องจัดทำแผน IDP เร่งด่วน</div>';
+    return;
+  }
+  const methods = {1:'Coaching, Leadership drill',2:'ฝึกประเมิน acuity, Case review',3:'Case simulation NEWS/EWS',4:'Incident audit, Risk checklist',5:'Communication workshop, SBAR drill',6:'Mentoring, Clinical coaching',7:'Role play, AAR',8:'Case discussion, Ethics workshop',9:'Emergency drill, Simulation',10:'Report audit, Dashboard review'};
+  const html = gaps.map(c=>`
+    <div style="border:0.5px solid var(--warning);border-radius:var(--radius);padding:12px;margin-bottom:10px;background:var(--warning-light);">
+      <div style="font-weight:600;margin-bottom:6px;">${c.id}. ${c.name} <span class="badge badge-amber">ระดับ ${assessRatings[c.id]||1} → เป้าหมาย 3</span></div>
+      <div style="font-size:13px;color:var(--text-muted);">วิธีพัฒนา: ${methods[c.id]||'-'}</div>
+      <div style="font-size:13px;color:var(--text-muted);">ระยะเวลา: 3 เดือน · ประเมินซ้ำหลังพัฒนา</div>
+    </div>
+  `).join('');
+  document.getElementById('idp-content').innerHTML = html;
+}
+
+function saveRecord() {
+  const rec = {
+    name: document.getElementById('a-name').value,
+    dept: document.getElementById('a-dept').value,
+    ward: document.getElementById('a-ward').value,
+    round: document.getElementById('a-round').value,
+    date: document.getElementById('a-date').value || new Date().toISOString().split('T')[0],
+    evaluatorType: document.getElementById('a-evaluator-type').value,
+    mentor: document.getElementById('a-mentor').value,
+    ratings: {...assessRatings},
+    score: calcTotalScore(),
+    timestamp: Date.now()
+  };
+  records.push(rec);
+  localStorage.setItem('nurseRecords', JSON.stringify(records));
+  document.getElementById('save-confirm').classList.remove('hidden');
+  document.getElementById('btn-reset-assess').style.display = 'inline-flex';
+  // Scroll to confirmation
+  document.getElementById('save-confirm').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function resetAssess() {
+  assessRatings = {};
+  // Clear profile fields
+  ['a-name','a-dept','a-mentor'].forEach(id => { document.getElementById(id).value = ''; });
+  ['a-position','a-ward','a-type','a-exp','a-round','a-evaluator-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.selectedIndex = 0;
+  });
+  document.getElementById('a-date').value = new Date().toISOString().split('T')[0];
+  // Hide confirm banner and reset button
+  document.getElementById('save-confirm').classList.add('hidden');
+  document.getElementById('btn-reset-assess').style.display = 'none';
+  // Go back to step 1
+  goStep(1);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function calcTotalScore() {
+  let total = 0;
+  COMPETENCIES.forEach(c=>{ total += ((assessRatings[c.id]||1)/5)*100*(c.weight/100); });
+  return Math.round(total);
+}
+
+function printResult() { window.print(); }
+
+// QUIZ CONSENT
+function handleConsent() {
+  const val = document.querySelector('input[name="consent"]:checked')?.value;
+  const nextBtn = document.getElementById('consent-next-btn');
+  const noMsg = document.getElementById('consent-no-msg');
+  if(val==='yes') {
+    nextBtn.style.display='flex';
+    noMsg.classList.add('hidden');
+  } else if(val==='no') {
+    nextBtn.style.display='none';
+    noMsg.classList.remove('hidden');
+  }
+}
+
+function proceedToProfile() {
+  document.getElementById('quiz-consent-form').classList.add('hidden');
+  document.getElementById('quiz-profile-form').classList.remove('hidden');
+
+  // Autofill from assessment form fields
+  const aName = document.getElementById('a-name')?.value.trim();
+  const aDept = document.getElementById('a-dept')?.value.trim();
+  const aWard = document.getElementById('a-ward')?.value.trim();
+  const aRound = document.getElementById('a-round')?.value;
+
+  const hasData = aName || aDept;
+
+  if(aName) document.getElementById('q-name').value = aName;
+
+  // Combine dept + ward for quiz dept field
+  const deptParts = [aDept, aWard].filter(Boolean);
+  if(deptParts.length) document.getElementById('q-dept').value = deptParts.join(' · ');
+
+  // Map assessment round to quiz round options
+  if(aRound) {
+    const roundMap = { 'ครั้งแรก':'ครั้งแรก', '1 เดือน':'1 เดือน', '3 เดือน':'3 เดือน', '6 เดือน':'6 เดือน', 'ประจำปี':'ประจำปี', 'หลังเหตุการณ์สำคัญ':'ประจำปี' };
+    const mapped = roundMap[aRound];
+    if(mapped) document.getElementById('q-round').value = mapped;
+  }
+
+  // Show/hide autofill banner
+  document.getElementById('quiz-autofill-banner').classList.toggle('hidden', !hasData);
+}
+
+function backToConsent() {
+  document.getElementById('quiz-profile-form').classList.add('hidden');
+  document.getElementById('quiz-consent-form').classList.remove('hidden');
+}
+
+// QUIZ
+function startQuiz() {
+  const name = document.getElementById('q-name').value.trim();
+  if(!name) { alert('กรุณากรอกชื่อ–สกุล'); return; }
+  quizAnswers = {};
+  document.getElementById('quiz-profile-form').classList.add('hidden');
+  document.getElementById('quiz-main').classList.remove('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+  renderQuestions();
+}
+
+function renderQuestions() {
+  const opts = ['ก','ข','ค','ง'];
+  const html = QUESTIONS.map(q=>`
+    <div class="quiz-question" id="qq-${q.id}">
+      <div class="quiz-num">ข้อ ${q.id} · หมวด ${q.cat}: ${CAT_NAMES[q.cat]}</div>
+      <div class="quiz-text">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((o,i)=>`
+          <label class="quiz-option" id="qo-${q.id}-${i}">
+            <input type="radio" name="q${q.id}" value="${i}" onchange="selectAnswer(${q.id},${i})">
+            <span><b>${opts[i]}.</b> ${o}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('quiz-questions').innerHTML = html;
+}
+
+function selectAnswer(qid, val) {
+  quizAnswers[qid] = val;
+  const total = Object.keys(quizAnswers).length;
+  document.getElementById('quiz-answered').textContent = 'ตอบแล้ว: '+total+'/40';
+  document.getElementById('quiz-progress-bar').style.width = (total/40*100)+'%';
+  document.getElementById('quiz-progress-label').textContent = 'ข้อ '+total+' จาก 40';
+}
+
+function submitQuiz() {
+  if(Object.keys(quizAnswers).length < 40) {
+    if(!confirm('ยังตอบไม่ครบ ('+Object.keys(quizAnswers).length+'/40) ต้องการส่งหรือไม่?')) return;
+  }
+  showQuizResult();
+}
+
+function showQuizResult() {
+  document.getElementById('quiz-main').classList.add('hidden');
+  document.getElementById('quiz-result').classList.remove('hidden');
+
+  let correct = 0;
+  const catScores = {};
+  for(let i=1;i<=10;i++) catScores[i]={c:0,t:0};
+
+  QUESTIONS.forEach(q=>{
+    catScores[q.cat].t++;
+    if(quizAnswers[q.id]===q.ans) { correct++; catScores[q.cat].c++; }
+  });
+
+  const score = correct;
+  const pct = Math.round(score/40*100);
+  const round = document.getElementById('q-round').value;
+  const isPost = round !== 'ครั้งแรก';
+  document.getElementById('quiz-type-label').textContent = isPost ? 'Post-test · '+round : 'Pre-test · ครั้งแรก';
+
+  const info = getLevelInfo(pct);
+  document.getElementById('q-score-display').textContent = score+'/40 ('+pct+'%)';
+  document.getElementById('q-score-display').style.color = pct>=80?'var(--success)':pct>=70?'var(--primary)':pct>=60?'var(--warning)':'var(--danger)';
+  document.getElementById('q-level-display').textContent = 'ระดับ '+info.level+' — '+info.label;
+  document.getElementById('q-badge-display').innerHTML = '<span class="badge '+info.badge+'"><i class="ti ti-award"></i> '+info.label+'</span>';
+  document.getElementById('q-action-display').textContent = info.action;
+
+  const catSummaryHtml = Object.entries(catScores).map(([cat,s])=>`
+    <div style="padding:6px 0;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+      <span>${CAT_NAMES[parseInt(cat)]}</span>
+      <span style="font-weight:600;color:${s.c/s.t>=0.7?'var(--success)':'var(--danger)'};">${s.c}/${s.t}</span>
+    </div>
+  `).join('');
+  document.getElementById('quiz-cat-summary').innerHTML = catSummaryHtml;
+
+  buildQuizBar(catScores);
+  buildAnswerReview();
+}
+
+function buildQuizBar(catScores) {
+  if(quizBarChartInst) quizBarChartInst.destroy();
+  const ctx = document.getElementById('quizBarChart').getContext('2d');
+  const labels = Object.keys(catScores).map(k=>CAT_NAMES[parseInt(k)]);
+  const data = Object.values(catScores).map(s=>Math.round(s.c/s.t*100));
+  quizBarChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{labels, datasets:[{label:'คะแนน (%)',data,backgroundColor:data.map(v=>v>=70?'#0F6E56':v>=60?'#BA7517':'#A32D2D'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}},x:{ticks:{font:{size:10},autoSkip:false,maxRotation:40}}}}
+  });
+}
+
+function buildAnswerReview() {
+  const opts = ['ก','ข','ค','ง'];
+  const html = QUESTIONS.map(q=>{
+    const ua = quizAnswers[q.id];
+    const correct = ua===q.ans;
+    return `<div style="margin-bottom:12px;padding:10px 12px;border-radius:var(--radius);border:0.5px solid ${correct?'var(--success)':'var(--danger)'};background:${correct?'var(--success-light)':'var(--danger-light)'};">
+      <div style="font-size:12px;font-weight:600;color:${correct?'var(--success)':'var(--danger)'};">${correct?'✓ ถูกต้อง':'✗ ผิด'} · ข้อ ${q.id}</div>
+      <div style="font-size:13px;margin:4px 0;">${q.q}</div>
+      ${ua!==undefined?`<div style="font-size:12px;">คำตอบของคุณ: <b>${opts[ua]}. ${q.opts[ua]}</b></div>`:'<div style="font-size:12px;color:var(--text-muted);">ไม่ได้ตอบ</div>'}
+      ${!correct?`<div style="font-size:12px;color:var(--success);">เฉลย: <b>${opts[q.ans]}. ${q.opts[q.ans]}</b></div>`:''}
+    </div>`;
+  }).join('');
+  document.getElementById('quiz-answers-review').innerHTML = html;
+}
+
+function saveQuizRecord() {
+  let correct = 0;
+  QUESTIONS.forEach(q=>{ if(quizAnswers[q.id]===q.ans) correct++; });
+  const rec = {
+    name: document.getElementById('q-name').value,
+    dept: document.getElementById('q-dept').value,
+    round: document.getElementById('q-round').value,
+    score: correct,
+    pct: Math.round(correct/40*100),
+    date: new Date().toISOString().split('T')[0],
+    timestamp: Date.now()
+  };
+  quizRecords.push(rec);
+  localStorage.setItem('quizRecords', JSON.stringify(quizRecords));
+  alert('บันทึกผลแบบทดสอบเรียบร้อย');
+}
+
+function resetQuiz() {
+  quizAnswers = {};
+  document.querySelectorAll('input[name="consent"]').forEach(r=>r.checked=false);
+  document.getElementById('consent-next-btn').style.display='none';
+  document.getElementById('consent-no-msg').classList.add('hidden');
+  document.getElementById('quiz-consent-form').classList.remove('hidden');
+  document.getElementById('quiz-profile-form').classList.add('hidden');
+  document.getElementById('quiz-main').classList.add('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+}
+
+// DASHBOARD
+function refreshDashboard() {
+  const allRecs = JSON.parse(localStorage.getItem('nurseRecords')||'[]');
+  const allQuiz = JSON.parse(localStorage.getItem('quizRecords')||'[]');
+
+  // Use demo data if empty
+  const recs = allRecs.length > 0 ? allRecs : getDemoRecords();
+  const quizRecs = allQuiz.length > 0 ? allQuiz : getDemoQuiz();
+
+  renderMetrics(recs, quizRecs);
+  renderCompChart(recs);
+  renderLevelChart(recs);
+  renderPrePostChart(quizRecs);
+  renderNurseList(recs);
+  renderGaps(recs);
+}
+
+function getDemoRecords() {
+  const names = ['น.ส.วิภา สมใจ','นาง รัตนา มีสุข','น.ส.ปราณี ดีงาม','นาย สมชาย ใจดี','นาง พรทิพย์ งามดี','น.ส.ศิริลักษณ์ แสงเงิน'];
+  return names.map((n,i)=>({
+    name:n, dept:'อายุรกรรม', round:['ครั้งแรก','1 เดือน','3 เดือน','6 เดือน','ประจำปี','ครั้งแรก'][i],
+    date:'2568-0'+(i+1)+'-15',
+    ratings: Object.fromEntries(COMPETENCIES.map(c=>[c.id, Math.min(5,Math.max(1,3+Math.round((Math.random()-0.4)*2)))])),
+    score: 60+Math.round(Math.random()*35),
+    timestamp: Date.now()-i*86400000
+  }));
+}
+
+function getDemoQuiz() {
+  const names = ['น.ส.วิภา สมใจ','นาง รัตนา มีสุข','น.ส.ปราณี ดีงาม','นาย สมชาย ใจดี'];
+  return [
+    ...names.map((n,i)=>({name:n,round:'ครั้งแรก',score:20+Math.round(Math.random()*8),pct:50+Math.round(Math.random()*20),date:'2568-01-10',timestamp:Date.now()-7*86400000})),
+    ...names.map((n,i)=>({name:n,round:'3 เดือน',score:30+Math.round(Math.random()*8),pct:75+Math.round(Math.random()*20),date:'2568-04-10',timestamp:Date.now()-2*86400000}))
+  ];
+}
+
+function renderMetrics(recs, quizRecs) {
+  const avg = recs.length ? Math.round(recs.reduce((a,r)=>a+r.score,0)/recs.length) : 0;
+  const passed = recs.filter(r=>r.score>=70).length;
+  const postTests = quizRecs.filter(r=>r.round!=='ครั้งแรก');
+  const preTests = quizRecs.filter(r=>r.round==='ครั้งแรก');
+  const avgPost = postTests.length ? Math.round(postTests.reduce((a,r)=>a+r.pct,0)/postTests.length) : 0;
+  const avgPre = preTests.length ? Math.round(preTests.reduce((a,r)=>a+r.pct,0)/preTests.length) : 0;
+  const imp = avgPost && avgPre ? ((avgPost-avgPre)/avgPre*100).toFixed(0) : '-';
+
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric blue"><div class="metric-label">ผู้รับการประเมิน</div><div class="metric-value">${recs.length}</div><div class="metric-sub">คน</div></div>
+    <div class="metric ${avg>=70?'green':'amber'}"><div class="metric-label">คะแนนเฉลี่ย</div><div class="metric-value">${avg}</div><div class="metric-sub">จาก 100</div></div>
+    <div class="metric ${passed/Math.max(recs.length,1)>=0.7?'green':'amber'}"><div class="metric-label">ผ่านเกณฑ์</div><div class="metric-value">${passed}/${recs.length}</div><div class="metric-sub">${recs.length?Math.round(passed/recs.length*100):0}%</div></div>
+    <div class="metric ${imp>=20?'green':'amber'}"><div class="metric-label">พัฒนาขึ้น (Pre→Post)</div><div class="metric-value">${imp==='NaN'||imp==='-'?'-':'+'+imp+'%'}</div><div class="metric-sub">คะแนนเฉลี่ย</div></div>
+  `;
+}
+
+function renderCompChart(recs) {
+  if(dashCompChartInst) dashCompChartInst.destroy();
+  if(!recs.length) return;
+  const avgs = COMPETENCIES.map(c=>{
+    const vals = recs.filter(r=>r.ratings&&r.ratings[c.id]).map(r=>r.ratings[c.id]);
+    return vals.length ? +(vals.reduce((a,v)=>a+v,0)/vals.length).toFixed(1) : 0;
+  });
+  const ctx = document.getElementById('dashCompChart').getContext('2d');
+  dashCompChartInst = new Chart(ctx,{
+    type:'bar',
+    data:{labels:COMPETENCIES.map(c=>c.short),datasets:[{label:'คะแนนเฉลี่ย',data:avgs,backgroundColor:avgs.map(v=>v>=3?'#0F6E56':v>=2?'#BA7517':'#A32D2D'),borderRadius:4},{label:'เกณฑ์ขั้นต่ำ (3)',data:COMPETENCIES.map(()=>3),type:'line',borderColor:'#A32D2D',borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11}}}},scales:{y:{min:0,max:5,ticks:{stepSize:1}},x:{ticks:{font:{size:10},autoSkip:false,maxRotation:40}}}}
+  });
+}
+
+function renderLevelChart(recs) {
+  if(dashLevelChartInst) dashLevelChartInst.destroy();
+  if(!recs.length) return;
+  const levels = [0,0,0,0,0];
+  recs.forEach(r=>{ const l = getLevelInfo(r.score).level; levels[l-1]++; });
+  const ctx = document.getElementById('dashLevelChart').getContext('2d');
+  dashLevelChartInst = new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:['ระดับ 1 ไม่ผ่าน','ระดับ 2 ต้องพัฒนา','ระดับ 3 ผ่านเกณฑ์','ระดับ 4 ชำนาญ','ระดับ 5 เชี่ยวชาญ'],datasets:[{data:levels,backgroundColor:['#A32D2D','#BA7517','#185FA5','#0F6E56','#534AB7'],borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}
+  });
+}
+
+function renderPrePostChart(quizRecs) {
+  if(dashPrePostChartInst) dashPrePostChartInst.destroy();
+  const names = [...new Set(quizRecs.map(r=>r.name))].slice(0,6);
+  const preData = names.map(n=>{ const r=quizRecs.find(q=>q.name===n&&q.round==='ครั้งแรก'); return r?r.pct:null; });
+  const postData = names.map(n=>{ const rs=quizRecs.filter(q=>q.name===n&&q.round!=='ครั้งแรก'); return rs.length?rs[rs.length-1].pct:null; });
+  const ctx = document.getElementById('dashPrePostChart').getContext('2d');
+  dashPrePostChartInst = new Chart(ctx,{
+    type:'bar',
+    data:{labels:names.map(n=>n.length>8?n.substring(0,8)+'…':n),datasets:[{label:'Pre-test',data:preData,backgroundColor:'rgba(163,45,45,0.7)',borderRadius:3},{label:'Post-test',data:postData,backgroundColor:'rgba(15,110,86,0.8)',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11}}}},scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}},x:{ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderNurseList(recs) {
+  const sorted = [...recs].sort((a,b)=>b.timestamp-a.timestamp).slice(0,6);
+  if(!sorted.length) { document.getElementById('dash-nurse-list').innerHTML='<div style="color:var(--text-muted);font-size:13px;">ยังไม่มีข้อมูล</div>'; return; }
+  const html = sorted.map(r=>{
+    const info = getLevelInfo(r.score);
+    return `<div class="nurse-row">
+      <div><div class="nurse-name">${r.name}</div><div class="nurse-info">${r.dept||''} · ${r.round||''} · ${r.date||''}</div></div>
+      <span class="badge ${info.badge}">${r.score} pts</span>
+    </div>`;
+  }).join('');
+  document.getElementById('dash-nurse-list').innerHTML = html;
+}
+
+function renderGaps(recs) {
+  if(!recs.length) { document.getElementById('dash-gaps').innerHTML='<div style="color:var(--text-muted);font-size:13px;">ยังไม่มีข้อมูล</div>'; return; }
+  const gapCounts = {};
+  COMPETENCIES.forEach(c=>{ gapCounts[c.id]=0; });
+  recs.forEach(r=>{ if(r.ratings) COMPETENCIES.forEach(c=>{ if((r.ratings[c.id]||1)<3) gapCounts[c.id]++; }); });
+  const sorted = COMPETENCIES.filter(c=>gapCounts[c.id]>0).sort((a,b)=>gapCounts[b.id]-gapCounts[a.id]);
+  if(!sorted.length) { document.getElementById('dash-gaps').innerHTML='<div class="alert alert-success"><i class="ti ti-check"></i>ไม่มีสมรรถนะที่ต่ำกว่าเกณฑ์</div>'; return; }
+  const html = sorted.map(c=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);">
+      <div style="font-size:14px;">${c.id}. ${c.name} ${c.critical?'<span class="badge badge-red" style="font-size:10px;">สำคัญ</span>':''}</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:100px;"><div class="progress-bar"><div class="progress-fill" style="width:${Math.round(gapCounts[c.id]/recs.length*100)}%;background:${c.critical?'var(--danger)':'var(--warning)'};"></div></div></div>
+        <span style="font-size:13px;font-weight:600;color:var(--danger);">${gapCounts[c.id]}/${recs.length} คน</span>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('dash-gaps').innerHTML = html;
+}
+
+// Init
+document.getElementById('a-date').value = new Date().toISOString().split('T')[0];
+initHomeTable();
+</script>
+
+<!-- ========== INFOGRAPHIC MODAL ========== -->
+<div class="modal-overlay hidden" id="infographic-modal">
+  <div style="background:#fff;border-radius:16px;max-width:780px;width:100%;max-height:95vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.18);" id="infographic-box">
+
+    <!-- Toolbar (hidden when printing) -->
+    <div id="infographic-toolbar" style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:0.5px solid rgba(0,0,0,0.1);position:sticky;top:0;background:#fff;z-index:10;">
+      <div style="font-size:15px;font-weight:700;color:#185FA5;display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-chart-infographic" style="font-size:18px;"></i>รายงานสรุปสมรรถนะพยาบาลเวรตรวจการนอกเวลา
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm btn-primary" onclick="printInfographic()"><i class="ti ti-printer"></i>พิมพ์ / บันทึก PDF</button>
+        <button class="btn btn-sm" onclick="closeInfographic()"><i class="ti ti-x"></i>ปิด</button>
+      </div>
+    </div>
+
+    <!-- INFOGRAPHIC CONTENT -->
+    <div id="infographic-content" style="padding:2rem;font-family:'Sarabun','Noto Sans Thai',sans-serif;">
+
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:2px solid #185FA5;">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:60px;height:60px;background:#E6F1FB;border-radius:14px;margin-bottom:10px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 16 4-4 4 4 4-4"/></svg>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#185FA5;line-height:1.2;">รายงานสรุปสมรรถนะ</div>
+        <div style="font-size:15px;font-weight:600;color:#1a1a1a;margin-top:4px;">พยาบาลเวรตรวจการนอกเวลา</div>
+        <div style="font-size:12px;color:#6b6b6b;margin-top:4px;">กลุ่มภารกิจด้านการพยาบาล โรงพยาบาลกลาง</div>
+        <div style="font-size:12px;color:#6b6b6b;" id="ig-date-label"></div>
+      </div>
+
+      <!-- KPI Row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:2rem;" id="ig-kpi-row"></div>
+
+      <!-- Divider label -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+        <div style="font-size:12px;font-weight:700;color:#185FA5;white-space:nowrap;">ผลการกระจายระดับสมรรถนะ</div>
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+      </div>
+
+      <!-- Level distribution visual -->
+      <div style="margin-bottom:2rem;" id="ig-level-bars"></div>
+
+      <!-- Divider label -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+        <div style="font-size:12px;font-weight:700;color:#185FA5;white-space:nowrap;">คะแนนเฉลี่ยรายสมรรถนะ</div>
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+      </div>
+
+      <!-- Competency score bars -->
+      <div style="margin-bottom:2rem;" id="ig-comp-bars"></div>
+
+      <!-- Divider label -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+        <div style="font-size:12px;font-weight:700;color:#185FA5;white-space:nowrap;">สมรรถนะที่ต้องพัฒนา (ต่ำกว่าเกณฑ์)</div>
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+      </div>
+
+      <div style="margin-bottom:2rem;" id="ig-gaps"></div>
+
+      <!-- Pre-Post comparison -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+        <div style="font-size:12px;font-weight:700;color:#185FA5;white-space:nowrap;">ผลการทดสอบความรู้ Pre–Post test</div>
+        <div style="height:2px;flex:1;background:#E6F1FB;"></div>
+      </div>
+
+      <div style="margin-bottom:2rem;" id="ig-prepost"></div>
+
+      <!-- Footer -->
+      <div style="border-top:1px solid #E6F1FB;padding-top:1rem;display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-size:11px;color:#9b9b9b;">จัดทำโดย: ระบบประเมินสมรรถนะพยาบาลเวรตรวจการนอกเวลา</div>
+        <div style="font-size:11px;color:#9b9b9b;" id="ig-footer-date"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  body > *:not(#infographic-print-target) { display: none !important; }
+  #infographic-print-target { display: block !important; }
+  #infographic-toolbar { display: none !important; }
+  .modal-overlay { position: static !important; background: none !important; padding: 0 !important; }
+  #infographic-box { box-shadow: none !important; max-height: none !important; border-radius: 0 !important; }
+  @page { margin: 1.5cm; size: A4; }
+}
+</style>
+
+<script>
+function openInfographic() {
+  const allRecs = JSON.parse(localStorage.getItem('nurseRecords')||'[]');
+  const allQuiz = JSON.parse(localStorage.getItem('quizRecords')||'[]');
+  const recs   = allRecs.length  > 0 ? allRecs  : getDemoRecords();
+  const quizRecs = allQuiz.length > 0 ? allQuiz : getDemoQuiz();
+
+  const today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('ig-date-label').textContent = 'ข้อมูล ณ วันที่ ' + today;
+  document.getElementById('ig-footer-date').textContent = 'พิมพ์วันที่ ' + today;
+
+  buildIgKPI(recs, quizRecs);
+  buildIgLevelBars(recs);
+  buildIgCompBars(recs);
+  buildIgGaps(recs);
+  buildIgPrePost(quizRecs);
+
+  document.getElementById('infographic-modal').classList.remove('hidden');
+}
+
+function closeInfographic() {
+  document.getElementById('infographic-modal').classList.add('hidden');
+}
+
+function printInfographic() {
+  // Tag the modal box so @media print can target it
+  const box = document.getElementById('infographic-box');
+  box.id = 'infographic-print-target';
+  window.print();
+  box.id = 'infographic-box';
+}
+
+function buildIgKPI(recs, quizRecs) {
+  const avg    = recs.length ? Math.round(recs.reduce((a,r)=>a+r.score,0)/recs.length) : 0;
+  const passed = recs.filter(r=>r.score>=70).length;
+  const pct    = recs.length ? Math.round(passed/recs.length*100) : 0;
+  const postTests = quizRecs.filter(r=>r.round!=='ครั้งแรก');
+  const preTests  = quizRecs.filter(r=>r.round==='ครั้งแรก');
+  const avgPost = postTests.length ? Math.round(postTests.reduce((a,r)=>a+r.pct,0)/postTests.length) : 0;
+  const avgPre  = preTests.length  ? Math.round(preTests.reduce((a,r)=>a+r.pct,0)/preTests.length)  : 0;
+  const imp = (avgPost && avgPre) ? Math.round((avgPost-avgPre)/avgPre*100) : null;
+
+  const cards = [
+    { icon:'👥', val: recs.length+'', unit:'คน', label:'ผู้รับการประเมิน', color:'#185FA5', bg:'#E6F1FB' },
+    { icon:'⭐', val: avg+'', unit:'/100', label:'คะแนนเฉลี่ยสมรรถนะ', color: avg>=70?'#0F6E56':'#BA7517', bg: avg>=70?'#E1F5EE':'#FAEEDA' },
+    { icon:'✅', val: pct+'%', unit:'('+passed+'/'+recs.length+')', label:'ผ่านเกณฑ์', color: pct>=70?'#0F6E56':'#BA7517', bg: pct>=70?'#E1F5EE':'#FAEEDA' },
+    { icon:'📈', val: imp!==null?(imp>0?'+'+imp+'%':imp+'%'):'-', unit:'Pre→Post', label:'พัฒนาขึ้นด้านความรู้', color: imp&&imp>0?'#0F6E56':'#534AB7', bg: imp&&imp>0?'#E1F5EE':'#EEEDFE' }
+  ];
+
+  document.getElementById('ig-kpi-row').innerHTML = cards.map(c=>`
+    <div style="background:${c.bg};border-radius:12px;padding:1rem;text-align:center;">
+      <div style="font-size:24px;margin-bottom:4px;">${c.icon}</div>
+      <div style="font-size:28px;font-weight:800;color:${c.color};line-height:1;">${c.val}</div>
+      <div style="font-size:11px;color:${c.color};font-weight:600;margin-top:2px;">${c.unit}</div>
+      <div style="font-size:11px;color:#6b6b6b;margin-top:6px;line-height:1.3;">${c.label}</div>
+    </div>
+  `).join('');
+}
+
+function buildIgLevelBars(recs) {
+  const levels = [0,0,0,0,0];
+  recs.forEach(r=>{ const l=getLevelInfo(r.score).level; levels[l-1]++; });
+  const total = recs.length || 1;
+  const configs = [
+    {label:'ระดับ 5 เชี่ยวชาญ', color:'#534AB7', bg:'#EEEDFE'},
+    {label:'ระดับ 4 ชำนาญ',     color:'#0F6E56', bg:'#E1F5EE'},
+    {label:'ระดับ 3 ผ่านเกณฑ์', color:'#185FA5', bg:'#E6F1FB'},
+    {label:'ระดับ 2 ต้องพัฒนา', color:'#BA7517', bg:'#FAEEDA'},
+    {label:'ระดับ 1 ไม่ผ่าน',   color:'#A32D2D', bg:'#FCEBEB'}
+  ];
+  document.getElementById('ig-level-bars').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+      ${configs.map((c,i)=>{
+        const n   = levels[4-i];
+        const pct = Math.round(n/total*100);
+        return `<div style="text-align:center;background:${c.bg};border-radius:10px;padding:12px 8px;">
+          <div style="font-size:28px;font-weight:800;color:${c.color};">${n}</div>
+          <div style="font-size:10px;color:${c.color};font-weight:700;">${pct}%</div>
+          <div style="font-size:10px;color:#6b6b6b;margin-top:4px;line-height:1.3;">${c.label}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function buildIgCompBars(recs) {
+  if(!recs.length) { document.getElementById('ig-comp-bars').innerHTML='<div style="color:#9b9b9b;font-size:13px;">ยังไม่มีข้อมูล</div>'; return; }
+  const avgs = COMPETENCIES.map(c=>{
+    const vals = recs.filter(r=>r.ratings&&r.ratings[c.id]).map(r=>r.ratings[c.id]);
+    return vals.length ? +(vals.reduce((a,v)=>a+v,0)/vals.length).toFixed(1) : 0;
+  });
+  document.getElementById('ig-comp-bars').innerHTML = COMPETENCIES.map((c,i)=>{
+    const v   = avgs[i];
+    const pct = Math.round(v/5*100);
+    const col = v>=3?'#0F6E56':v>=2?'#BA7517':'#A32D2D';
+    const bg  = v>=3?'#E1F5EE':v>=2?'#FAEEDA':'#FCEBEB';
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div style="width:180px;font-size:12px;color:#1a1a1a;flex-shrink:0;line-height:1.3;">${c.id}. ${c.name} ${c.critical?'<span style="font-size:10px;color:#A32D2D;font-weight:700;">[สำคัญ]</span>':''}</div>
+      <div style="flex:1;background:#f0f0ef;border-radius:6px;height:20px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:6px;transition:width 0.5s;"></div>
+      </div>
+      <div style="width:42px;text-align:right;font-size:13px;font-weight:700;color:${col};">${v.toFixed(1)}</div>
+      <div style="width:28px;font-size:11px;text-align:center;padding:2px 4px;border-radius:4px;background:${bg};color:${col};font-weight:600;">${v>=3?'✓':'!'}</div>
+    </div>`;
+  }).join('');
+}
+
+function buildIgGaps(recs) {
+  if(!recs.length) { document.getElementById('ig-gaps').innerHTML='<div style="color:#9b9b9b;font-size:13px;">ยังไม่มีข้อมูล</div>'; return; }
+  const gapCounts = {};
+  COMPETENCIES.forEach(c=>{ gapCounts[c.id]=0; });
+  recs.forEach(r=>{ if(r.ratings) COMPETENCIES.forEach(c=>{ if((r.ratings[c.id]||1)<3) gapCounts[c.id]++; }); });
+  const gaps = COMPETENCIES.filter(c=>gapCounts[c.id]>0).sort((a,b)=>gapCounts[b.id]-gapCounts[a.id]);
+
+  if(!gaps.length) {
+    document.getElementById('ig-gaps').innerHTML = `<div style="background:#E1F5EE;border-radius:10px;padding:1rem;text-align:center;color:#0F6E56;font-weight:600;">✓ ไม่มีสมรรถนะที่ต่ำกว่าเกณฑ์</div>`;
+    return;
+  }
+  document.getElementById('ig-gaps').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+      ${gaps.map(c=>{
+        const n   = gapCounts[c.id];
+        const pct = Math.round(n/recs.length*100);
+        const col = c.critical?'#A32D2D':'#BA7517';
+        const bg  = c.critical?'#FCEBEB':'#FAEEDA';
+        return `<div style="background:${bg};border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:22px;font-weight:800;color:${col};min-width:36px;text-align:center;">${pct}%</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:${col};">${c.name}</div>
+            <div style="font-size:11px;color:#6b6b6b;">${n} จาก ${recs.length} คน ต่ำกว่าเกณฑ์${c.critical?' · สมรรถนะสำคัญ':''}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function buildIgPrePost(quizRecs) {
+  const pre  = quizRecs.filter(r=>r.round==='ครั้งแรก');
+  const post = quizRecs.filter(r=>r.round!=='ครั้งแรก');
+  const avgPre  = pre.length  ? Math.round(pre.reduce((a,r)=>a+r.pct,0)/pre.length)  : null;
+  const avgPost = post.length ? Math.round(post.reduce((a,r)=>a+r.pct,0)/post.length) : null;
+  const passPost = post.filter(r=>r.pct>=70).length;
+
+  if(!pre.length && !post.length) {
+    document.getElementById('ig-prepost').innerHTML='<div style="color:#9b9b9b;font-size:13px;">ยังไม่มีข้อมูล</div>'; return;
+  }
+
+  const imp = (avgPre&&avgPost) ? Math.round((avgPost-avgPre)/avgPre*100) : null;
+
+  document.getElementById('ig-prepost').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:8px;align-items:center;margin-bottom:12px;">
+      <div style="background:#FCEBEB;border-radius:12px;padding:1.25rem;text-align:center;">
+        <div style="font-size:11px;font-weight:700;color:#A32D2D;margin-bottom:4px;">PRE-TEST</div>
+        <div style="font-size:36px;font-weight:800;color:#A32D2D;">${avgPre!==null?avgPre+'%':'—'}</div>
+        <div style="font-size:11px;color:#6b6b6b;">${pre.length} คน</div>
+      </div>
+      <div style="text-align:center;font-size:20px;">→</div>
+      <div style="background:#E1F5EE;border-radius:12px;padding:1.25rem;text-align:center;">
+        <div style="font-size:11px;font-weight:700;color:#0F6E56;margin-bottom:4px;">POST-TEST</div>
+        <div style="font-size:36px;font-weight:800;color:#0F6E56;">${avgPost!==null?avgPost+'%':'—'}</div>
+        <div style="font-size:11px;color:#6b6b6b;">${post.length} คน · ผ่าน ${passPost} คน</div>
+      </div>
+    </div>
+    ${imp!==null?`<div style="background:${imp>0?'#E1F5EE':'#FAEEDA'};border-radius:10px;padding:10px 16px;text-align:center;">
+      <span style="font-size:14px;font-weight:700;color:${imp>0?'#0F6E56':'#BA7517'};">${imp>0?'📈':'📉'} ความก้าวหน้าด้านความรู้: ${imp>0?'+':''}${imp}%</span>
+      ${imp>=20?'<span style="margin-left:8px;font-size:12px;color:#0F6E56;font-weight:600;">✓ บรรลุเป้าหมาย (≥20%)</span>':'<span style="margin-left:8px;font-size:12px;color:#BA7517;">ยังไม่ถึงเป้าหมาย (≥20%)</span>'}
+    </div>`:''}`;
+}
+</script>
+</body>
+</html>

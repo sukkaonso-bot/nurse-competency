@@ -1606,6 +1606,13 @@ function buildIgPrePost(quizRecs) {
       ${imp>=20?'<span style="margin-left:8px;font-size:12px;color:#0F6E56;font-weight:600;">✓ บรรลุเป้าหมาย (≥20%)</span>':'<span style="margin-left:8px;font-size:12px;color:#BA7517;">ยังไม่ถึงเป้าหมาย (≥20%)</span>'}
     </div>`:''}`;
 }
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='dashboard') refreshDashboard();
+} 
 </script>
 </body>
 </html>

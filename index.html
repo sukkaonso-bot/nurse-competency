@@ -1613,6 +1613,103 @@ function showPage(id) {
   document.getElementById('tab-'+id).classList.add('active');
   if(id==='dashboard') refreshDashboard();
 } 
+function goAssessStep2() {
+  const name = document.getElementById('a-name').value.trim();
+  if(!name) { alert('กรุณากรอกชื่อ–สกุล'); return; }
+  initCompForms();
+  goStep(2);
+}
+
+function goAssessStep3() {
+  if(Object.keys(assessRatings).length < 10) {
+    alert('กรุณาประเมินสมรรถนะให้ครบทุกด้าน ('+Object.keys(assessRatings).length+'/10)');
+    return;
+  }
+  calcAssessResult();
+  goStep(3);
+}
+
+function goStep(n) {
+  [1,2,3].forEach(i=>{
+    document.getElementById('assess-step'+i).classList.toggle('hidden', i!==n);
+    const lbl = document.getElementById('step'+i+'-label');
+    lbl.classList.remove('active','done');
+    if(i===n) lbl.classList.add('active');
+    else if(i<n) lbl.classList.add('done');
+  });
+}
+
+function handleConsent() {
+  const val = document.querySelector('input[name="consent"]:checked')?.value;
+  const nextBtn = document.getElementById('consent-next-btn');
+  const noMsg = document.getElementById('consent-no-msg');
+  if(val==='yes') {
+    nextBtn.style.display='flex';
+    noMsg.classList.add('hidden');
+  } else if(val==='no') {
+    nextBtn.style.display='none';
+    noMsg.classList.remove('hidden');
+  }
+}
+
+function proceedToProfile() {
+  document.getElementById('quiz-consent-form').classList.add('hidden');
+  document.getElementById('quiz-profile-form').classList.remove('hidden');
+  const aName = document.getElementById('a-name')?.value.trim();
+  const aDept = document.getElementById('a-dept')?.value.trim();
+  const aWard = document.getElementById('a-ward')?.value.trim();
+  const aRound = document.getElementById('a-round')?.value;
+  const hasData = aName || aDept;
+  if(aName) document.getElementById('q-name').value = aName;
+  const deptParts = [aDept, aWard].filter(Boolean);
+  if(deptParts.length) document.getElementById('q-dept').value = deptParts.join(' · ');
+  if(aRound) {
+    const roundMap = {'ครั้งแรก':'ครั้งแรก','1 เดือน':'1 เดือน','3 เดือน':'3 เดือน','6 เดือน':'6 เดือน','ประจำปี':'ประจำปี','หลังเหตุการณ์สำคัญ':'ประจำปี'};
+    const mapped = roundMap[aRound];
+    if(mapped) document.getElementById('q-round').value = mapped;
+  }
+  document.getElementById('quiz-autofill-banner').classList.toggle('hidden', !hasData);
+}
+
+function backToConsent() {
+  document.getElementById('quiz-profile-form').classList.add('hidden');
+  document.getElementById('quiz-consent-form').classList.remove('hidden');
+}
+
+function startQuiz() {
+  const name = document.getElementById('q-name').value.trim();
+  if(!name) { alert('กรุณากรอกชื่อ–สกุล'); return; }
+  quizAnswers = {};
+  document.getElementById('quiz-profile-form').classList.add('hidden');
+  document.getElementById('quiz-main').classList.remove('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+  renderQuestions();
+}
+
+function resetQuiz() {
+  quizAnswers = {};
+  document.querySelectorAll('input[name="consent"]').forEach(r=>r.checked=false);
+  document.getElementById('consent-next-btn').style.display='none';
+  document.getElementById('consent-no-msg').classList.add('hidden');
+  document.getElementById('quiz-consent-form').classList.remove('hidden');
+  document.getElementById('quiz-profile-form').classList.add('hidden');
+  document.getElementById('quiz-main').classList.add('hidden');
+  document.getElementById('quiz-result').classList.add('hidden');
+}
+
+function resetAssess() {
+  assessRatings = {};
+  ['a-name','a-dept','a-mentor'].forEach(id => { document.getElementById(id).value = ''; });
+  ['a-position','a-ward','a-type','a-exp','a-round','a-evaluator-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.selectedIndex = 0;
+  });
+  document.getElementById('a-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('save-confirm').classList.add('hidden');
+  document.getElementById('btn-reset-assess').style.display = 'none';
+  goStep(1);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
 </script>
 </body>
 </html>

@@ -689,6 +689,13 @@ textarea { resize: vertical; min-height: 80px; }
 </div>
 
 <script>
+// ===================================================
+// 🔧 ตั้งค่า Google Apps Script URL ตรงนี้
+// วาง URL ที่ได้จาก Deploy → Web app ด้านล่าง
+// ===================================================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKQtYmXIjBoX6BeQ2qRslcUo1tQlgGN3RNnyYx3FVefYovQGuDEog9dRlzRR5YhWTR/exec';
+// ===================================================
+
 const COMPETENCIES = [
   { id:1, name:'ภาวะผู้นำและการตัดสินใจ', short:'ภาวะผู้นำ', weight:10, critical:false,
     desc:'ความสามารถในการเป็นผู้นำ จัดลำดับความสำคัญ ตัดสินใจอย่างเหมาะสม',
@@ -957,6 +964,9 @@ function saveRecord() {
     name: document.getElementById('a-name').value,
     dept: document.getElementById('a-dept').value,
     ward: document.getElementById('a-ward').value,
+    position: document.getElementById('a-position').value,
+    nurseType: document.getElementById('a-type').value,
+    exp: document.getElementById('a-exp').value,
     round: document.getElementById('a-round').value,
     date: document.getElementById('a-date').value || new Date().toISOString().split('T')[0],
     evaluatorType: document.getElementById('a-evaluator-type').value,
@@ -965,11 +975,15 @@ function saveRecord() {
     score: calcTotalScore(),
     timestamp: Date.now()
   };
+  // บันทึก localStorage
   records.push(rec);
   localStorage.setItem('nurseRecords', JSON.stringify(records));
+
+  // ส่งไป Google Sheets
+  sendToSheets({ type: 'competency', ...rec });
+
   document.getElementById('save-confirm').classList.remove('hidden');
   document.getElementById('btn-reset-assess').style.display = 'inline-flex';
-  // Scroll to confirmation
   document.getElementById('save-confirm').scrollIntoView({behavior:'smooth', block:'center'});
 }
 
@@ -1158,19 +1172,38 @@ function buildAnswerReview() {
 
 function saveQuizRecord() {
   let correct = 0;
-  QUESTIONS.forEach(q=>{ if(quizAnswers[q.id]===q.ans) correct++; });
+  const catScores = {};
+  for(let i=1;i<=10;i++) catScores[i]=0;
+  QUESTIONS.forEach(q=>{
+    if(quizAnswers[q.id]===q.ans){ correct++; catScores[q.cat]++; }
+  });
   const rec = {
     name: document.getElementById('q-name').value,
     dept: document.getElementById('q-dept').value,
     round: document.getElementById('q-round').value,
     score: correct,
     pct: Math.round(correct/40*100),
+    catScores,
     date: new Date().toISOString().split('T')[0],
     timestamp: Date.now()
   };
   quizRecords.push(rec);
   localStorage.setItem('quizRecords', JSON.stringify(quizRecords));
+
+  // ส่งไป Google Sheets
+  sendToSheets({ type: 'quiz', ...rec });
+
   alert('บันทึกผลแบบทดสอบเรียบร้อย');
+}
+
+function sendToSheets(data) {
+  if (!SCRIPT_URL || SCRIPT_URL === 'YOUR_APPS_SCRIPT_URL_HERE') return;
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(err => console.warn('Google Sheets sync error:', err));
 }
 
 function resetQuiz() {
